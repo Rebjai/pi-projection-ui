@@ -1,11 +1,21 @@
-<script setup>
-import { ref, onMounted, watch } from "vue";
+<script setup lang="ts">
+import { ref, onMounted, watch, nextTick } from "vue";
+
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 const clients = ref({ connected: [] });
 const images = ref({ uploads: [] });
 const loading = ref(true);
-const selectedImage = ref(null);
-const previewCanvas = ref(null);
+const selectedImage = ref<string | null>(null);
+const previewCanvas = ref<HTMLCanvasElement | null>(null);
+
+const rects = ref<Rect[]>([]);
+const dragging = ref<{ rectIndex: number; corner: string } | null>(null);
 
 
 async function fetchData() {
@@ -21,6 +31,12 @@ async function fetchData() {
       
       selectedImage.value = images.value.uploads[0];
     }
+    rects.value = clients.value.connected.map((_, index) => ({
+      x: 50 + index * 20,
+      y: 50 + index * 20,
+      w: 100,
+      h: 100,
+    }));
     console.log("Fetched clients and images", clients.value, images.value);
   } catch (err) {
     console.error("Error fetching data", err);
@@ -29,42 +45,101 @@ async function fetchData() {
   }
 }
 
-onMounted(fetchData);
+function getHandles(rect : Rect) {
+  return [
+    { corner: "tl", x: rect.x, y: rect.y },
+    { corner: "tr", x: rect.x + rect.w, y: rect.y },
+    { corner: "bl", x: rect.x, y: rect.y + rect.h },
+    { corner: "br", x: rect.x + rect.w, y: rect.y + rect.h },
+  ];
+}
 
-function drawCanvas(newImage) {
+// Mouse handling
+function onMouseDown(e: MouseEvent) {
+  const rect = previewCanvas.value!.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  rects.value.forEach((r, i) => {
+    const handles = getHandles(r);
+    handles.forEach((h) => {
+      if (Math.abs(mx - h.x) < 6 && Math.abs(my - h.y) < 6) {
+        dragging.value = { rectIndex: i, corner: h.corner };
+      }
+    });
+  });
+}
+
+function onMouseMove(e: MouseEvent) {
+  if (!dragging.value) return;
+
+  const rect = previewCanvas.value!.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const r = rects.value[dragging.value.rectIndex];
+  switch (dragging.value.corner) {
+    case "tl":
+      r.w += r.x - mx;
+      r.h += r.y - my;
+      r.x = mx;
+      r.y = my;
+      break;
+    case "tr":
+      r.w = mx - r.x;
+      r.h += r.y - my;
+      r.y = my;
+      break;
+    case "bl":
+      r.w += r.x - mx;
+      r.x = mx;
+      r.h = my - r.y;
+      break;
+    case "br":
+      r.w = mx - r.x;
+      r.h = my - r.y;
+      break;
+  }
+  drawCanvas();
+}
+
+function onMouseUp() {
+  dragging.value = null;
+}
+
+onMounted(() => {
+  fetchData();
+});
+
+function drawCanvas( newImage = selectedImage.value) {
+  console.log("Drawing canvas with image", newImage);
+  
   if (!newImage || !previewCanvas.value) return;
 
   const canvas = previewCanvas.value;
-  const ctx = canvas.getContext("2d");
+  console.log();
+  
+  const ctx = canvas.getContext("2d")!;
   const img = new Image();
   img.src = `http://localhost:5000/uploads/${newImage}`;
 
   img.onload = () => {
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const x = (canvas.width - img.width * scale) / 2;
+      const y = (canvas.height - img.height * scale) / 2;
+      ctx.drawImage(img, 0, 0, img.width, img.height, x, y, img.width * scale, img.height * scale);
 
-    // Calculate scaling ratio to preserve aspect ratio
-    const scale = Math.min(
-      canvas.width / img.width,
-      canvas.height / img.height
-    );
+      // Draw rects after image
+      rects.value.forEach((r) => {
+        ctx.strokeStyle = "lime";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(r.x, r.y, r.w, r.h);
 
-    // Calculate position to center the image
-    const x = (canvas.width - img.width * scale) / 2;
-    const y = (canvas.height - img.height * scale) / 2;
-
-    // Draw image with scaling
-    ctx.drawImage(
-      img,
-      0,
-      0,
-      img.width,
-      img.height,
-      x,
-      y,
-      img.width * scale,
-      img.height * scale
-    );
+        // Draw handles (corners)
+        const handles = getHandles(r);
+        ctx.fillStyle = "red";
+        handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
+      });
   };
   img.onerror = (err) => {
     console.error("Error loading image", err);
@@ -73,7 +148,21 @@ function drawCanvas(newImage) {
 
 // Draw image in canvas whenever selectedImage changes
 watch(selectedImage, (newImage) => {
+  console.log("Selected image changed to", newImage);
+  
   drawCanvas(newImage);
+});
+
+watch(loading, async(newVal) => {
+  await nextTick();
+  if (newVal === false && previewCanvas.value) {
+    const canvas = previewCanvas.value;
+    console.log("Canvas ready", canvas);
+
+    canvas.addEventListener("mousedown", onMouseDown);
+    canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseup", onMouseUp);
+  }
 });
 
 </script>
@@ -91,11 +180,10 @@ watch(selectedImage, (newImage) => {
         <ul class="space-y-2">
           <li
             v-for="client in clients.connected"
-            :key="client.id || client"
+            :key="client || client"
             class="p-3 bg-green-100 rounded shadow"
           >
-            <div class="font-medium">{{ client.name || client }}</div>
-            <div class="text-sm text-gray-500">{{ client.status || 'Connected' }}</div>
+            <div class="font-medium">{{ client || client }}</div>
           </li>
         </ul>
       </div>
