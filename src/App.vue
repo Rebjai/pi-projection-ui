@@ -111,15 +111,15 @@ function populateRects() {
 function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: number) {
   displays.forEach((display, displayIndex) => {
     console.log("Pushing rect for display", display);
-    
-    let w = display.resolution.width;
-    let h = display.resolution.height;
 
-    if (!w || !h) {
-      console.warn("Display has no resolution, using default 800x600", display);
-      w = 800;
-      h = 600;
+    if (!display.resolution || display.resolution.width <= 0 || display.resolution.height <= 0 || isNaN(display.resolution.width) || isNaN(display.resolution.height)) {
+      console.warn("Invalid resolution for display", display, "defaulting to 800x600");
+      display.resolution = { width: 800, height: 600 };
     }
+    
+    const aspectRatio = display.resolution.width / display.resolution.height;
+    let w = 150;
+    let h = w / aspectRatio;
     const defaultRect: Rect = {
       x: 20 + displayIndex * 30 + clientIndex * 10,
       y: 20 + displayIndex * 30 + clientIndex * 10,
