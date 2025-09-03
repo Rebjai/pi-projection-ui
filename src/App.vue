@@ -308,9 +308,6 @@ watch(loading, async (newVal) => {
   }
 });
 
-watch(rects, () => {
-  drawCanvas();
-}, { deep: true });
 
 </script>
 
