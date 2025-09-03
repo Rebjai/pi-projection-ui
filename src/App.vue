@@ -251,9 +251,13 @@ onMounted(() => {
 });
 
 function drawCanvas(newImage = selectedImage.value) {
-  console.log("Drawing canvas with image", newImage);
-
+  console.log("drawCanvas called with image", newImage);
+  
+  
   if (!newImage || !previewCanvas.value) return;
+  console.log("Drawing canvas with image", newImage);
+  console.log("canvas ref", previewCanvas.value);
+  
 
   const canvas = previewCanvas.value;
   console.log();
@@ -305,6 +309,7 @@ watch(loading, async (newVal) => {
     canvas.addEventListener("mousedown", (e) => onMouseDown(e, canvas));
     canvas.addEventListener("mousemove", (e) => onMouseMove(e, canvas));
     canvas.addEventListener("mouseup", onMouseUp);
+    drawCanvas();
   }
 });
 
