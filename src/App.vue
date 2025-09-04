@@ -8,6 +8,12 @@ interface Rect {
   h: number;
 }
 
+interface RectConfig extends Rect {
+  id: string;
+  client_id: string;
+  display_output: string;
+}
+
 interface Assignment {
   display_output: string;
   rect: Rect;
@@ -44,7 +50,7 @@ const selectedImage = ref<string | null>(null);
 const previewCanvas = ref<HTMLCanvasElement | null>(null);
 const selectedClient = ref<Client | null>(null);
 
-const rects = ref<Rect[]>([]);
+const rects = ref<RectConfig[]>([]);
 const dragging = ref<{
   rectIndex: number;
   corner: string;
@@ -79,33 +85,36 @@ async function fetchData() {
 
 function populateRects() {
   clients.value.forEach((client, index) => {
-      if (!client.config) {
-        console.warn("Client has no config", client);
-      }
-      if (!client.config!.assignments) {
-        console.warn("Client config has no assignments", client.config);
-      }
-      console.log("Client config assignments", client.config?.assignments);
-      if (!client.config?.assignments.length) {
-        console.warn("No assignments for client", client.client_id);
-        pushRectsFromDisplayConfig(client.config?.displays || [], index);
-        // let mock5displays: DisplayConfig[] = [];
-        // for (let i = 0; i < 5; i++) {
-        //   mock5displays.push({
-        //     name: `Display ${i + 1}`,
-        //     resolution: { width: 800, height: 600 },
-        //     status: "active",
-        //   });
-        // }
-        // pushRectsFromDisplayConfig(mock5displays, index);
-        console.log("Rects after pushing from display config", rects.value);
-        
-        return ;
-      }
-      client.config!.assignments.forEach((assignment) => {
-        rects.value.push({ ...assignment.rect });
+    if (!client.config) {
+      console.warn("Client has no config", client);
+    }
+    if (!client.config!.assignments) {
+      console.warn("Client config has no assignments", client.config);
+    }
+    console.log("Client config assignments", client.config?.assignments);
+    if (!client.config?.assignments.length) {
+      console.warn("No assignments for client", client.client_id);
+      pushRectsFromDisplayConfig(client.config?.displays || [], index);
+      // let mock5displays: DisplayConfig[] = [];
+      // for (let i = 0; i < 5; i++) {
+      //   mock5displays.push({
+      //     name: `Display ${i + 1}`,
+      //     resolution: { width: 800, height: 600 },
+      //     status: "active",
+      //   });
+      // }
+      // pushRectsFromDisplayConfig(mock5displays, index);
+      console.log("Rects after pushing from display config", rects.value);
+
+      return;
+    }
+    client.config!.assignments.forEach((assignment) => {
+      rects.value.push({
+        id: `${client.client_id}-${assignment.display_output}`, client_id: client.client_id, display_output: assignment.display_output,
+        ...assignment.rect
       });
     });
+  });
 }
 
 function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: number) {
@@ -116,7 +125,7 @@ function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: numb
       console.warn("Invalid resolution for display", display, "defaulting to 800x600");
       display.resolution = { width: 800, height: 600 };
     }
-    
+
     const aspectRatio = display.resolution.width / display.resolution.height;
     let w = 150;
     let h = w / aspectRatio;
@@ -126,7 +135,13 @@ function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: numb
       w,
       h,
     };
-    rects.value.push(defaultRect);
+    let rectConfig: RectConfig = {
+      id: `${clients.value[clientIndex].client_id}-${display.name}`,
+      client_id: clients.value[clientIndex].client_id,
+      display_output: display.name,
+      ...defaultRect,
+    };
+    rects.value.push(rectConfig);
     console.log(`Pushed rect for display ${display.name} of client ${clientIndex}`, defaultRect);
   });
 }
@@ -246,18 +261,29 @@ function onMouseUp() {
   dragging.value = null;
 }
 
+function handleClientClick(client: Client) {
+  selectedClient.value = client;
+  drawCanvas();
+  console.log("Selected client", client);
+}
+
+function isFromSelectedClient() {
+  if (!selectedClient.value) return false;
+  return rects.value.some(r => r.client_id === selectedClient.value?.client_id);
+}
+
 onMounted(() => {
   fetchData();
 });
 
 function drawCanvas(newImage = selectedImage.value) {
   console.log("drawCanvas called with image", newImage);
-  
-  
+
+
   if (!newImage || !previewCanvas.value) return;
   console.log("Drawing canvas with image", newImage);
   console.log("canvas ref", previewCanvas.value);
-  
+
 
   const canvas = previewCanvas.value;
   console.log();
@@ -278,7 +304,7 @@ function drawCanvas(newImage = selectedImage.value) {
 
     // Draw rects after image
     rects.value.forEach((r) => {
-      ctx.strokeStyle = "lime";
+      ctx.strokeStyle = isFromSelectedClient() ? "blue" : "green";
       ctx.lineWidth = 2;
       ctx.strokeRect(r.x, r.y, r.w, r.h);
 
@@ -326,8 +352,14 @@ watch(loading, async (newVal) => {
       <!-- Clients -->
       <div class="col-span-2 md:col-span-1">
         <h2 class="text-xl font-semibold mb-2">Connected Clients</h2>
+        <!-- button to unselect client -->
+        <button v-if="selectedClient" @click="selectedClient = null; drawCanvas();"
+          class="mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+          Unselect Client
+        </button>
         <ul class="space-y-2">
-          <li v-for="client in clients" :key="client.client_id" class="p-3 bg-green-100 rounded shadow">
+          <li v-for="client in clients" :key="client.client_id" class="p-3 bg-green-100 rounded shadow"
+            @click="handleClientClick(client)">
             <div class="font-medium">{{ client.client_id || client }}</div>
             <div class="text-sm text-gray-600" v-if="client.config">
               Config: {{ client.config }}
