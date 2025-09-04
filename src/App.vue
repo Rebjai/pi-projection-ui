@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref } from "vue";
-import { clients, images, loading, fetchData } from "@/composables/useClients";
-import { rects, populateRects } from "@/composables/useRects";
+import { clients, images, loading, fetchData, selectedClient, setSelectedClient } from "@/composables/useClients";
+import { populateRects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp } from "@/composables/useMouseHandlers";
 import type { Client } from "@/types/projection";
 
-const selectedClient = ref<Client | null>(null);
 
 function handleClientClick(client: Client) {
-  selectedClient.value = client;
+  setSelectedClient(client);
   drawCanvas();
 }
 
