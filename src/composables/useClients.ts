@@ -50,3 +50,18 @@ export async function updateClientConfig(client: Client, newConfig: ClientConfig
     console.error("Error updating client config", err);
   }
 }
+
+export async function sliceImagesForClients() {
+  try {
+    const res = await fetch(`http://localhost:5000/slice_all`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to slice images: ${res.statusText}`);
+    }
+
+  } catch (err) {
+    console.error("Error slicing images", err);
+  }
+}

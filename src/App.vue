@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref } from "vue";
-import { clients, images, loading, fetchData, selectedClient, setSelectedClient, updateClientConfig } from "@/composables/useClients";
+import { clients, images, loading, fetchData, selectedClient, setSelectedClient, updateClientConfig, sliceImagesForClients } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp } from "@/composables/useMouseHandlers";
@@ -53,6 +53,9 @@ watch(loading, async (newVal) => {
         <h2 class="text-xl font-semibold mb-2">Connected Clients</h2>
         <button v-if="selectedClient" @click="selectedClient = null; drawCanvas();"
           class="mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"> Unselect Client </button>
+        <!-- button to slice images for clients -->
+        <button @click="sliceImagesForClients()"
+          class="mb-2 ml-2 px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"> Slice images </button>
         <ul class="space-y-2">
           <li v-for="client in clients" :key="client.client_id" class="p-3 rounded shadow"
             :class="{
