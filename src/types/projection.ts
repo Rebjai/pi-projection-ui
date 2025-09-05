@@ -5,10 +5,11 @@ export interface Rect {
   h: number;
 }
 
-export interface RectConfig extends Rect {
+export interface RectConfig  {
   id: string;
   client_id: string;
   display_output: string;
+  rect: Rect;
 }
 
 export interface Assignment {

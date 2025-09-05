@@ -27,7 +27,7 @@ export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
   const my = e.clientY - rect.top;
 
   for (let i = rects.value.length - 1; i >= 0; i--) {
-    const r = rects.value[i];
+    const r = rects.value[i].rect;
     const handles = getHandles(r);
 
     // Check corners first
@@ -70,7 +70,7 @@ export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
   const mx = e.clientX - rect.left;
   const my = e.clientY - rect.top;
 
-  const r = rects.value[dragging.value.rectIndex];
+  const r = rects.value[dragging.value.rectIndex].rect;
 
   switch (dragging.value.corner) {
     // Corners

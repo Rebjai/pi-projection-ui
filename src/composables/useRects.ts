@@ -24,7 +24,7 @@ export function populateRects() {
         id: `${client.client_id}-${assignment.display_output}`,
         client_id: client.client_id,
         display_output: assignment.display_output,
-        ...assignment.rect,
+        rect: assignment.rect,
       });
       
     });
@@ -50,7 +50,7 @@ function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: numb
       id: `${clients.value[clientIndex].client_id}-${display.name}`,
       client_id: clients.value[clientIndex].client_id,
       display_output: display.name,
-      ...defaultRect,
+      rect: defaultRect,
     });
   });
 }
