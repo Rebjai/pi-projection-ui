@@ -1,15 +1,26 @@
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref } from "vue";
-import { clients, images, loading, fetchData, selectedClient, setSelectedClient } from "@/composables/useClients";
-import { populateRects } from "@/composables/useRects";
+import { clients, images, loading, fetchData, selectedClient, setSelectedClient, updateClientConfig } from "@/composables/useClients";
+import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp } from "@/composables/useMouseHandlers";
-import type { Client } from "@/types/projection";
+import type { Assignment, Client, ClientConfig } from "@/types/projection";
 
 
 function handleClientClick(client: Client) {
   setSelectedClient(client);
   drawCanvas();
+}
+
+function saveClientConfig(client: Client) {
+  if (typeof client === 'string') return; // Can't save config for string clients
+  let currentConfig: ClientConfig = client.config!
+  let newAssigments: Assignment[] = rects.value.map(r => ({
+    display_output: r.display_output,
+    rect: r.rect
+  }));
+  let newConfig: ClientConfig = { ...currentConfig, assignments: newAssigments };
+  updateClientConfig(client, newConfig);
 }
 
 onMounted(() => {
@@ -51,6 +62,10 @@ watch(loading, async (newVal) => {
             @click="handleClientClick(client)">
             <div class="font-medium">{{ client.client_id || client }}</div>
             <div class="text-sm text-gray-600" v-if="client.config"> Config: {{ client.config }} </div>
+            <!-- save config button below-->
+            <button v-if="selectedClient && typeof client !== 'string' && selectedClient.client_id === client.client_id" @click.stop="saveClientConfig(client)"
+              class="mt-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"> Save Config </button>
+             
           </li>
         </ul>
       </div>

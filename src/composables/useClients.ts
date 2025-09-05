@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Client } from "@/types/projection";
+import type { Client, ClientConfig } from "@/types/projection";
 
 export const clients = ref<Client[]>([]);
 export const images = ref<{ uploads: string[] }>({ uploads: [] });
@@ -29,5 +29,24 @@ export async function fetchData(populateRects: () => void, setSelectedImage: (im
     console.error("Error fetching data", err);
   } finally {
     loading.value = false;
+  }
+}
+
+export async function updateClientConfig(client: Client, newConfig: ClientConfig) {
+  try {
+    const res = await fetch(`http://localhost:5000/config/${client.client_id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newConfig),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to update config: ${res.statusText}`);
+    }
+
+    const updatedConfig = await res.json();
+    client.config = updatedConfig.config;
+  } catch (err) {
+    console.error("Error updating client config", err);
   }
 }
