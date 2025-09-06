@@ -66,7 +66,7 @@ watch(loading, async (newVal) => {
             <div class="font-medium">{{ client.client_id || client }}</div>
             <div class="text-sm text-gray-600" v-if="client.config"> Config: {{ client.config }} </div>
             <!-- save config button below-->
-            <button v-if="selectedClient && typeof client !== 'string' && selectedClient.client_id === client.client_id" @click.stop="saveClientConfig(client)"
+            <button v-if="typeof client !== 'string'" @click.stop="saveClientConfig(client)"
               class="mt-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"> Save Config </button>
              
           </li>
