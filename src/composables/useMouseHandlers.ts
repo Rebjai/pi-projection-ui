@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { rects } from "./useRects";
 import { drawCanvas } from "./useCanvas";
-import type { Rect, RectConfig } from "@/types/projection";
+import type { Client, Rect } from "@/types/projection";
 
 export const dragging = ref<{
     rectIndex: number;
@@ -63,7 +63,7 @@ export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
   }
 }
 
-export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
+export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement, clients: Client[]) {
   if (!dragging.value) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -118,7 +118,7 @@ export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
       break;
   }
 
-  drawCanvas();
+  drawCanvas(clients)
 }
 
 export function onMouseUp() {

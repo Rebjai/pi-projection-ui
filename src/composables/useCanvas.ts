@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { rects, isRectFromSelectedClient } from "./useRects";
-import type { Rect } from "@/types/projection";
+import type { Client, Rect } from "@/types/projection";
 
 export const previewCanvas = ref<HTMLCanvasElement | null>(null);
 export const selectedImage = ref<string | null>(null);
@@ -20,7 +20,7 @@ function getHandles(rect: Rect) {
   ];
 }
 
-export function drawCanvas(newImage = selectedImage.value) {
+export function drawCanvas(clients: Client[], newImage = selectedImage.value) {
   console.log("drawCanvas called with image", newImage);
 
 
@@ -36,18 +36,18 @@ export function drawCanvas(newImage = selectedImage.value) {
     cachedImage.value.src = src;
 
     cachedImage.value.onload = () => {
-      renderCanvas(ctx, canvas, cachedImage.value);
+      renderCanvas(ctx, canvas, cachedImage.value, clients);
     };
     cachedImage.value.onerror = (err) => {
       console.error("Error loading image", err);
     };
   } else {
     // Just redraw with the cached image
-    renderCanvas(ctx, canvas, cachedImage.value);
+    renderCanvas(ctx, canvas, cachedImage.value, clients);
   }
 }
 
-function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, image: HTMLImageElement | null) {
+function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, image: HTMLImageElement | null, clients : Client[]) {
   if (!image) return;
   const img = image;
   const parent = canvas.parentElement;
@@ -70,7 +70,24 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
   rects.value.forEach((r) => {
     ctx.strokeStyle = isRectFromSelectedClient(r) ? "blue" : "green";
     ctx.lineWidth = 2;
-    let rect = r.rect;
+    const client = clients.find(c => c.client_id === r.client_id);
+    if (!client) return;
+    if (!client.config) return;
+    if (!client.config.client_canvas_size) return;
+    const canvasW = client.config.client_canvas_size.width;
+    const canvasH = client.config.client_canvas_size.height;
+    if (canvasW <= 0 || canvasH <= 0) return;
+    // scale rect to current canvas size
+    const scaleX = canvas.width / canvasW;
+    const scaleY = canvas.height / canvasH;
+    // use the smaller scale to maintain aspect ratio
+    const scaleUniform = Math.min(scaleX, scaleY);
+    let rect = { ...r.rect };
+    rect.x = rect.x * scaleUniform + x;
+    rect.y = rect.y * scaleUniform + y;
+    rect.w = rect.w * scaleUniform;
+    rect.h = rect.h * scaleUniform;
+    
     ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
 
     // Draw handles (corners)

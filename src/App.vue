@@ -9,7 +9,7 @@ import type { Assignment, Client, ClientConfig } from "@/types/projection";
 
 function handleClientClick(client: Client) {
   setSelectedClient(client);
-  drawCanvas();
+  drawCanvas(clients.value);
 }
 
 function saveClientConfig(client: Client) {
@@ -27,16 +27,16 @@ onMounted(() => {
   fetchData(populateRects, setSelectedImage);
 });
 
-watch(selectedImage, (newImage) => drawCanvas(newImage));
-watch(selectedClient, () => drawCanvas());
+watch(selectedImage, (newImage) => drawCanvas(clients.value, newImage));
+watch(selectedClient, () => drawCanvas(clients.value));
 watch(loading, async (newVal) => {
   await nextTick();
   if (!newVal && previewCanvas.value) {
     const canvas = previewCanvas.value;
     canvas.addEventListener("mousedown", (e) => onMouseDown(e, canvas));
-    canvas.addEventListener("mousemove", (e) => onMouseMove(e, canvas));
+    canvas.addEventListener("mousemove", (e) => onMouseMove(e, canvas, clients.value));
     canvas.addEventListener("mouseup", onMouseUp);
-    drawCanvas();
+    drawCanvas(clients.value);
   }
 });
 </script>
@@ -51,7 +51,7 @@ watch(loading, async (newVal) => {
       <!-- Clients -->
       <div class="col-span-2 md:col-span-1">
         <h2 class="text-xl font-semibold mb-2">Connected Clients</h2>
-        <button v-if="selectedClient" @click="selectedClient = null; drawCanvas();"
+        <button v-if="selectedClient" @click="selectedClient = null; drawCanvas(clients)"
           class="mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"> Unselect Client </button>
         <!-- button to slice images for clients -->
         <button @click="sliceImagesForClients()"
