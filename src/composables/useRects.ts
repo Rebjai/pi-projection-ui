@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Rect, RectConfig, DisplayConfig } from "@/types/projection";
+import type { Rect, RectConfig, DisplayConfig, Client } from "@/types/projection";
 import { clients, selectedClient } from "./useClients";
 
 export const rects = ref<RectConfig[]>([]);
@@ -7,16 +7,21 @@ export const rects = ref<RectConfig[]>([]);
 export function populateRects() {
   clients.value.forEach((client, index) => {
     if (!client.config?.assignments?.length) {
-      pushRectsFromDisplayConfig(client.config?.displays || [], index);
-    //   let mock5displays: DisplayConfig[] = [];
-    //   for (let i = 0; i < 5; i++) {
-    //     mock5displays.push({
-    //       name: `Display ${i + 1}`,
-    //       resolution: { width: 800, height: 600 },
-    //       status: "active",
-    //     });
-    //   }
-    //   pushRectsFromDisplayConfig(mock5displays, index);
+      pushRectsFromDisplayConfig(client, index);
+      // let mock5displays: DisplayConfig[] = [];
+      // for (let i = 0; i < 5; i++) {
+      //   mock5displays.push({
+      //     name: `Display ${i + 1}`,
+      //     resolution: { width: 800, height: 600 },
+      //     status: "active",
+      //   });
+      // }
+      // client.config = {
+      //   ...client.config!,
+      //   displays: mock5displays,
+      //   assignments: [],
+      // };
+      // pushRectsFromDisplayConfig(client, index);
       return;
     }
     client.config.assignments.forEach((assignment) => {
@@ -31,7 +36,9 @@ export function populateRects() {
   });
 }
 
-function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: number) {
+function pushRectsFromDisplayConfig(client: Client, clientIndex: number) {
+  if (!client.config?.displays) return;
+  const displays = client.config.displays;
   displays.forEach((display, displayIndex) => {
     if (!display.resolution || display.resolution.width <= 0 || display.resolution.height <= 0) {
       display.resolution = { width: 800, height: 600 };
@@ -49,6 +56,11 @@ function pushRectsFromDisplayConfig(displays: DisplayConfig[], clientIndex: numb
     rects.value.push({
       id: `${clients.value[clientIndex].client_id}-${display.name}`,
       client_id: clients.value[clientIndex].client_id,
+      display_output: display.name,
+      rect: defaultRect,
+    });
+    client.config!.assignments = client.config!.assignments || [];
+    client.config!.assignments.push({
       display_output: display.name,
       rect: defaultRect,
     });

@@ -19,7 +19,7 @@ function saveClientConfig(client: Client) {
     display_output: r.display_output,
     rect: r.rect
   }));
-  let newConfig: ClientConfig = { ...currentConfig, assignments: newAssigments };
+  let newConfig: ClientConfig = { ...currentConfig, assignments: newAssigments, client_canvas_size: { width: previewCanvas.value?.width || 400, height: previewCanvas.value?.height || 300 } };
   updateClientConfig(client, newConfig);
 }
 
