@@ -82,16 +82,20 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     const scaleY = canvas.height / canvasH;
     // use the smaller scale to maintain aspect ratio
     const scaleUniform = Math.min(scaleX, scaleY);
-    let rect = { ...r.rect };
-    rect.x = rect.x * scaleUniform + x;
-    rect.y = rect.y * scaleUniform + y;
-    rect.w = rect.w * scaleUniform;
-    rect.h = rect.h * scaleUniform;
+    // update rect in rects to scaled version for hit detection
+    r.rect.x = r.rect.x * scaleUniform + x;
+    r.rect.y = r.rect.y * scaleUniform + y;
+    r.rect.w = r.rect.w * scaleUniform;
+    r.rect.h = r.rect.h * scaleUniform;
     
-    ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.strokeRect(r.rect.x, r.rect.y, r.rect.w, r.rect.h);
+    client.config.client_canvas_size.width = canvas.width;
+
+    //update client canvas size to current canvas size
+    client.config.client_canvas_size.height = canvas.height;
 
     // Draw handles (corners)
-    const handles = getHandles(rect);
+    const handles = getHandles(r.rect);
     ctx.fillStyle = "red";
     handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
   });
