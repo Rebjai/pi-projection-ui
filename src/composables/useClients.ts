@@ -65,3 +65,59 @@ export async function sliceImagesForClients() {
     console.error("Error slicing images", err);
   }
 }
+
+export async function startPresentationModeForAllClients() {
+  try {
+    const res = await fetch(`http://localhost:5000/start_presentation`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to start presentation mode: ${res.statusText}`);
+    }
+
+  } catch (err) {
+    console.error("Error starting presentation mode", err);
+  }
+}
+
+export async function stopPresentationModeForAllClients() {
+  try {
+    const res = await fetch(`http://localhost:5000/stop_presentation`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to stop presentation mode: ${res.statusText}`);
+    }
+
+  } catch (err) {
+    console.error("Error stopping presentation mode", err);
+  }
+}
+
+export async function showNextImageForAllClients() {
+  try {
+    const res = await fetch(`http://localhost:5000/presentation/next`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to show next image: ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error("Error showing next image", err);
+  }
+}
+
+export async function showPreviousImageForAllClients() {
+  try {
+    const res = await fetch(`http://localhost:5000/presentation/prev`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to show previous image: ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error("Error showing previous image", err);
+  }
+}

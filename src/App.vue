@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref } from "vue";
-import { clients, images, loading, fetchData, selectedClient, setSelectedClient, updateClientConfig, sliceImagesForClients } from "@/composables/useClients";
+import { clients, images, loading, fetchData, selectedClient, 
+  setSelectedClient, updateClientConfig, sliceImagesForClients,
+  startPresentationModeForAllClients,
+  showNextImageForAllClients,
+  showPreviousImageForAllClients,
+  stopPresentationModeForAllClients
+ } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp } from "@/composables/useMouseHandlers";
@@ -56,7 +62,20 @@ watch(loading, async (newVal) => {
         <!-- button to slice images for clients -->
         <button @click="sliceImagesForClients()"
           class="mb-2 ml-2 px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"> Slice images </button>
-        <ul class="space-y-2">
+        <!-- send command to start presentation mode -->
+        <button @click="startPresentationModeForAllClients()"
+          class="mb-2 ml-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Start Presentation</button>
+        <!-- send command to stop presentation mode -->
+        <button @click="stopPresentationModeForAllClients()"
+          class="mb-2 ml-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"> Stop Presentation</button>
+        <!-- send command to show previous image -->
+        <button @click="showPreviousImageForAllClients()"
+          class="mb-2 ml-2 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"> Previous Image</button>
+        <!-- send command to show next image -->
+        <button @click="showNextImageForAllClients()"
+          class="mb-2 ml-2 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"> Next Image</button>
+  
+          <ul class="space-y-2">
           <li v-for="client in clients" :key="client.client_id" class="p-3 rounded shadow"
             :class="{
               'bg-blue-100 cursor-pointer': selectedClient && ((typeof client === 'string' && client === selectedClient) || (typeof client !== 'string' && selectedClient && client.client_id === selectedClient.client_id)),
