@@ -121,3 +121,21 @@ export async function showPreviousImageForAllClients() {
     console.error("Error showing previous image", err);
   }
 }
+
+
+export async function pushAllConfigsToClients(clients: Client[]) {
+  try {
+    let configs = clients.map((client) => client.config);
+    const res = await fetch(`http://localhost:5000/configs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ configs }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to push configs: ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error("Error pushing configs to clients", err);
+  }
+}

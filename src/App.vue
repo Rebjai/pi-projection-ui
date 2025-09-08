@@ -5,7 +5,8 @@ import { clients, images, loading, fetchData, selectedClient,
   startPresentationModeForAllClients,
   showNextImageForAllClients,
   showPreviousImageForAllClients,
-  stopPresentationModeForAllClients
+  stopPresentationModeForAllClients,
+  pushAllConfigsToClients
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
@@ -62,6 +63,9 @@ watch(loading, async (newVal) => {
         <!-- button to slice images for clients -->
         <button @click="sliceImagesForClients()"
           class="mb-2 ml-2 px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"> Slice images </button>
+        <!-- push config to clients -->
+        <button @click="pushAllConfigsToClients(clients)"
+          class="mb-2 ml-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Push all configs </button>
         <!-- send command to start presentation mode -->
         <button @click="startPresentationModeForAllClients()"
           class="mb-2 ml-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Start Presentation</button>
