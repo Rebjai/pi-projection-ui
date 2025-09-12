@@ -22,10 +22,15 @@ function handleClientClick(client: Client) {
 function saveClientConfig(client: Client) {
   if (typeof client === 'string') return; // Can't save config for string clients
   let currentConfig: ClientConfig = client.config!
-  let newAssigments: Assignment[] = rects.value.map(r => ({
-    display_output: r.display_output,
-    rect: r.rect
-  }));
+  let newAssigments: Assignment[] = [];
+  rects.value.forEach(r => {
+    if (r.client_id === client.client_id) {
+      newAssigments.push({
+        display_output: r.display_output,
+        rect: r.rect
+      });
+    }
+  });
   let newConfig: ClientConfig = { ...currentConfig, assignments: newAssigments, client_canvas_size: { width: previewCanvas.value?.width || 400, height: previewCanvas.value?.height || 300 } };
   updateClientConfig(client, newConfig);
 }
