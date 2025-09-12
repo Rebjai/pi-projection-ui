@@ -73,7 +73,9 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     const client = clients.find(c => c.client_id === r.client_id);
     if (!client) return;
     if (!client.config) return;
-    if (!client.config.client_canvas_size) return;
+    if (!client.config.client_canvas_size) {
+      client.config.client_canvas_size = { width: canvas.width, height: canvas.height };
+    }
     const canvasW = client.config.client_canvas_size.width;
     const canvasH = client.config.client_canvas_size.height;
     if (canvasW <= 0 || canvasH <= 0) return;
