@@ -22,8 +22,8 @@ export function populateRects() {
       //   assignments: [],
       // };
       // pushRectsFromDisplayConfig(client, index);
-      return;
     }
+    if (!client.config?.assignments) return;
     client.config.assignments.forEach((assignment) => {
       rects.value.push({
         id: `${client.client_id}-${assignment.display_output}`,
@@ -31,7 +31,6 @@ export function populateRects() {
         display_output: assignment.display_output,
         rect: assignment.rect,
       });
-      
     });
   });
 }
@@ -53,12 +52,6 @@ function pushRectsFromDisplayConfig(client: Client, clientIndex: number) {
       w,
       h,
     };
-    rects.value.push({
-      id: `${clients.value[clientIndex].client_id}-${display.name}`,
-      client_id: clients.value[clientIndex].client_id,
-      display_output: display.name,
-      rect: defaultRect,
-    });
     client.config!.assignments = client.config!.assignments || [];
     client.config!.assignments.push({
       display_output: display.name,
