@@ -6,7 +6,7 @@ export const rects = ref<RectConfig[]>([]);
 
 export function populateRects() {
   clients.value.forEach((client, index) => {
-    if (!client.config?.assignments?.length) {
+    if (!client.config?.assignments?.length || client.config.assignments.length != client.config.displays?.length) {
       pushRectsFromDisplayConfig(client, index);
       // let mock5displays: DisplayConfig[] = [];
       // for (let i = 0; i < 5; i++) {
@@ -39,6 +39,10 @@ function pushRectsFromDisplayConfig(client: Client, clientIndex: number) {
   if (!client.config?.displays) return;
   const displays = client.config.displays;
   displays.forEach((display, displayIndex) => {
+    // check if assignments already has this display
+    if (client.config!.assignments?.some(a => a.display_output === display.name)) {
+      return;
+    }
     if (!display.resolution || display.resolution.width <= 0 || display.resolution.height <= 0) {
       display.resolution = { width: 800, height: 600 };
     }
