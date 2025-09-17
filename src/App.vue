@@ -6,7 +6,8 @@ import { clients, images, loading, fetchData, selectedClient,
   showNextImageForAllClients,
   showPreviousImageForAllClients,
   stopPresentationModeForAllClients,
-  pushAllConfigsToClients
+  pushAllConfigsToClients,
+  setHomographyForClientDisplay
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
@@ -46,6 +47,13 @@ function setSelectedDisplay(display: DisplayConfig | null) {
   if (!foundDisplay) return;
   selectedDisplay.value = foundDisplay;
   selectedDisplayImage.value = selectedImage.value;
+  // populate homography points
+  const homography = selectedClient.value.config?.homographies ? selectedClient.value.config.homographies[foundDisplay.name] : null;
+  if (homography) {
+    // convert homography matrix to points
+    const points = homography.matrix
+    homographyPoints.value = points;
+  }
   // draw homography canvas
   drawHomographyCanvas();
 }
@@ -148,7 +156,7 @@ watch(loading, async (newVal) => {
 
           <!-- Thumbnail of selected image -->
           <div v-if="selectedImage" class="col-span-3 flex justify-center"> <img
-              :src="`http://localhost:5000/uploads/${selectedImage}`" alt="Thumbnail"
+              :src="`http://192.168.1.76:5000/uploads/${selectedImage}`" alt="Thumbnail"
               class="w-full h-26 object-contain rounded shadow" />
           </div>
         </div>
@@ -156,6 +164,9 @@ watch(loading, async (newVal) => {
       <!-- select and set homography for selected display in another canvas only show if selectedDisplay is not null -->
       <div v-if="selectedDisplay" class="col-span-2 flex flex-col items-center mt-4">
         <h2 class="text-xl font-semibold mb-2">Set Homography for {{ selectedDisplay.name }}</h2>
+        <!-- button to save homography points to selectedClient config -->
+        <button @click="setHomographyForClientDisplay(selectedClient!, selectedDisplay!, homographyPoints)"
+          class="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Save Homography </button>
         <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)" @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()" @mouseup="onMouseUpHomography()"
         ></canvas>
       </div>
