@@ -15,6 +15,8 @@ import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMove
 import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 
+const API_URL = import.meta.env.VITE_API_URL;
+console.log("API_URL:", API_URL);
 function handleClientClick(client: Client) {
   setSelectedClient(client);
   drawCanvas(clients.value);
@@ -156,7 +158,7 @@ watch(loading, async (newVal) => {
 
           <!-- Thumbnail of selected image -->
           <div v-if="selectedImage" class="col-span-3 flex justify-center"> <img
-              :src="`http://192.168.1.76:5000/uploads/${selectedImage}`" alt="Thumbnail"
+              :src="`${API_URL}/uploads/${selectedImage}`" alt="Thumbnail"
               class="w-full h-26 object-contain rounded shadow" />
           </div>
         </div>

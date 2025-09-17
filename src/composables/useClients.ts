@@ -13,8 +13,8 @@ export function setSelectedClient(client: Client) {
 export async function fetchData(populateRects: () => void, setSelectedImage: (img: string) => void) {
   try {
     const [clientsRes, uploadsRes] = await Promise.all([
-      fetch("http://localhost:5000/clients"),
-      fetch("http://localhost:5000/uploads"),
+      fetch(`${import.meta.env.VITE_API_URL}/clients`),
+      fetch(`${import.meta.env.VITE_API_URL}/uploads`)
     ]);
 
     clients.value = (await clientsRes.json()).connected!;
@@ -34,7 +34,7 @@ export async function fetchData(populateRects: () => void, setSelectedImage: (im
 
 export async function updateClientConfig(client: Client, newConfig: ClientConfig) {
   try {
-    const res = await fetch(`http://localhost:5000/config/${client.client_id}`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/config/${client.client_id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newConfig),
@@ -53,7 +53,7 @@ export async function updateClientConfig(client: Client, newConfig: ClientConfig
 
 export async function sliceImagesForClients() {
   try {
-    const res = await fetch(`http://localhost:5000/slice_all`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/slice_all`, {
       method: "POST",
     });
 
@@ -68,7 +68,7 @@ export async function sliceImagesForClients() {
 
 export async function startPresentationModeForAllClients() {
   try {
-    const res = await fetch(`http://localhost:5000/start_presentation`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/start_presentation`, {
       method: "POST",
     });
 
@@ -83,7 +83,7 @@ export async function startPresentationModeForAllClients() {
 
 export async function stopPresentationModeForAllClients() {
   try {
-    const res = await fetch(`http://localhost:5000/stop_presentation`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/stop_presentation`, {
       method: "POST",
     });
 
@@ -98,7 +98,7 @@ export async function stopPresentationModeForAllClients() {
 
 export async function showNextImageForAllClients() {
   try {
-    const res = await fetch(`http://localhost:5000/presentation/next`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/presentation/next`, {
       method: "POST",
     });
     if (!res.ok) {
@@ -111,7 +111,7 @@ export async function showNextImageForAllClients() {
 
 export async function showPreviousImageForAllClients() {
   try {
-    const res = await fetch(`http://localhost:5000/presentation/prev`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/presentation/prev`, {
       method: "POST",
     });
     if (!res.ok) {
@@ -126,7 +126,7 @@ export async function showPreviousImageForAllClients() {
 export async function pushAllConfigsToClients(clients: Client[]) {
   try {
     let configs = clients.map((client) => client.config);
-    const res = await fetch(`http://localhost:5000/configs`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/configs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ configs }),

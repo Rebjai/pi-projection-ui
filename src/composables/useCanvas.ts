@@ -35,7 +35,7 @@ export function drawCanvas(clients: Client[], newImage = selectedImage.value) {
   if (!newImage || !previewCanvas.value) return;
   const canvas = previewCanvas.value;
   const ctx = canvas.getContext("2d")!;
-  const src = `http://localhost:5000/uploads/${newImage}`;
+  const src = `${import.meta.env.VITE_API_URL}/uploads/${newImage}`;
 
   // Only reload if the source changes
   if (!cachedImage || cachedSrc.value !== src) {
@@ -128,7 +128,7 @@ export function drawHomographyCanvas() {
     .replace(/\s+/g, "_");    // replace spaces with underscores
 
   const tileName = `client_${selectedClient.value?.client_id}_tile_${selectedDisplay.value.name}.png`;
-  const src = `http://localhost:5000/tiles/${imageName}/${tileName}`;
+  const src = `${import.meta.env.VITE_API_URL}/tiles/${imageName}/${tileName}`;
 
   // --- Load and cache image ---
   if (!cachedDisplayImage.value || cachedDisplayImage.value.src !== src) {
