@@ -200,20 +200,28 @@ export function drawHomographyCanvas() {
   drawGrid(ctx, canvasWidth, canvasHeight, 25);
 
   // --- Initialize homography points if missing ---
+  let scaledPoints = [] as number[][];
   if (homographyPoints.value.length !== 4) {
+    console.log("Initializing homography points");
     homographyPoints.value = [
       [offsetX, offsetY],
       [offsetX + drawWidth, offsetY],
       [offsetX + drawWidth, offsetY + drawHeight],
       [offsetX, offsetY + drawHeight],
     ];
+    scaledPoints = homographyPoints.value;
+  } else {
+    // Scale existing points to new canvas size
+    console.log("Scaling existing homography points");
+    scaledPoints = toCanvas(homographyPoints.value, homographyCanvas.value);
   }
+  homographyPoints.value = toNormalized(scaledPoints, homographyCanvas.value);
 
   // --- Draw path connecting homography points ---
   ctx.strokeStyle = "blue";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  homographyPoints.value.forEach((p, i) => {
+  scaledPoints.forEach((p, i) => {
     if (i === 0) {
       ctx.moveTo(p[0], p[1]);
     } else {
@@ -225,7 +233,7 @@ export function drawHomographyCanvas() {
 
 
   // --- Draw draggable corner handles ---
-  const handles = getHandlesHomography(homographyPoints.value);
+  const handles = getHandlesHomography(scaledPoints);
 
   handles.forEach((h, index) => {
     ctx.fillStyle =
@@ -256,4 +264,19 @@ function drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, 
     ctx.lineTo(width, y);
     ctx.stroke();
   }
+}
+
+function toCanvas(points: number[][], canvas: HTMLCanvasElement): number[][] {
+  return points.map(([nx, ny]) => [
+    nx * canvas.width,
+    ny * canvas.height,
+  ]);
+}
+
+// Convert from canvas pixel coords back to normalized [0,1]
+function toNormalized(points: number[][], canvas: HTMLCanvasElement): number[][] {
+  return points.map(([x, y]) => [
+    x / canvas.width,
+    y / canvas.height,
+  ]);
 }

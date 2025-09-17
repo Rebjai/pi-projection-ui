@@ -144,21 +144,29 @@ export function getMousePos(evt: MouseEvent, canvasEl: HTMLCanvasElement | null 
 }
 
 export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
-  console.log("onMouseDownHomography", points);
   const pos = getMousePos(evt, canvas);
-  const handles = getHandlesHomography(points);
-  const radius = 10;
-  draggingIndex.value = handles.findIndex(h =>
-    Math.abs(h.x - pos.x) < radius && Math.abs(h.y - pos.y) < radius
+
+  // Convert normalized → canvas coords for hit testing
+  const handles = getHandlesHomography(
+    points.map(([nx, ny]) => [
+      nx * canvas.width,
+      ny * canvas.height
+    ])
   );
-  console.log("Dragging index:", draggingIndex.value);
+
+  const radius = 10;
+  draggingIndex.value = handles.findIndex(
+    (h) => Math.abs(h.x - pos.x) < radius && Math.abs(h.y - pos.y) < radius
+  );
 }
 
 export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
   if (draggingIndex.value === null || draggingIndex.value === -1) return;
   console.log("onMouseMoveHomography", draggingIndex.value);
   const pos = getMousePos(evt, canvas);
-  points[draggingIndex.value] = [pos.x, pos.y];
+  const nx = pos.x / canvas.width;
+  const ny = pos.y / canvas.height;
+  points[draggingIndex.value] = [nx, ny];
   console.log("Updated point:", points[draggingIndex.value]);
 }
 export function onMouseUpHomography() {

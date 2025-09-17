@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Client, ClientConfig } from "@/types/projection";
+import type { Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 export const clients = ref<Client[]>([]);
 export const images = ref<{ uploads: string[] }>({ uploads: [] });
@@ -140,14 +140,14 @@ export async function pushAllConfigsToClients(clients: Client[]) {
   }
 }
 
-export async function setHomographyForClientDisplay(client: Client, displayName: string, points: [number, number][]) {
+export async function setHomographyForClientDisplay(client: Client, display: DisplayConfig, points: number[][]) {
   try {
     if (!client.config) {
       throw new Error("Client config is undefined");
     }
     let currentConfig = client.config;
     if (!currentConfig) return;
-    let newHomographies = { ...currentConfig.homographies, [displayName]: { matrix: points } }
+    let newHomographies = { ...currentConfig.homographies, [display.name]: { matrix: points } }
     let newConfig = { ...currentConfig, homographies: newHomographies };
     await updateClientConfig(client, newConfig);
   } catch (err) {
