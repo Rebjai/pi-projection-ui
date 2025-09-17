@@ -12,7 +12,7 @@ import { clients, images, loading, fetchData, selectedClient,
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
-import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography } from "@/composables/useMouseHandlers";
+import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove } from "@/composables/useMouseHandlers";
 import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 
@@ -84,6 +84,14 @@ watch(loading, async (newVal) => {
       drawCanvas(clients.value)
     });
     canvas.addEventListener("mouseup", onMouseUp);
+    canvas.addEventListener("mouseleave", onMouseUp);
+    canvas.addEventListener("touchstart", (e) => onTouchStart(e, canvas), { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      onTouchMove(e, canvas);
+      if (dragging.value)
+      drawCanvas(clients.value)
+    }, { passive: false });
+    canvas.addEventListener("touchend", onMouseUp, { passive: false });
     drawCanvas(clients.value);
   }
 });

@@ -32,10 +32,11 @@ export function getHandlesHomography(points: number[][]) {
 }
 
 // Mouse handling
-export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
+export function onPointerDown(clientX: number, clientY: number, canvas: HTMLCanvasElement) {
+  console.log("onPointerDown", clientX, clientY);
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
 
   for (let i = rects.value.length - 1; i >= 0; i--) {
     const r = rects.value[i].rect;
@@ -63,6 +64,7 @@ export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
 
     // Check inside rectangle for move
     if (mx > r.x && mx < r.x + r.w && my > r.y && my < r.y + r.h) {
+      console.log("Start moving rect", i);
       dragging.value = {
         rectIndex: i,
         corner: "move",
@@ -74,12 +76,12 @@ export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
   }
 }
 
-export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
+export function onPointerMove(clientX: number, clientY: number, canvas: HTMLCanvasElement) {
   if (!dragging.value) return;
 
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
 
   const r = rects.value[dragging.value.rectIndex].rect;
 
@@ -130,16 +132,27 @@ export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
   }
 }
 
+export function onMouseDown(evt: MouseEvent, canvas: HTMLCanvasElement) {
+  onPointerDown(evt.clientX, evt.clientY, canvas);
+}
+
+export function onMouseMove(evt: MouseEvent, canvas: HTMLCanvasElement) {
+  if (dragging.value) {
+    onPointerMove(evt.clientX, evt.clientY, canvas);
+  }
+}
+
 export function onMouseUp() {
     dragging.value = null;
 }
 
-export function getMousePos(evt: MouseEvent, canvasEl: HTMLCanvasElement | null = null) {
+export function getMousePos(evt: MouseEvent | TouchEvent, canvasEl: HTMLCanvasElement | null = null) {
   if (!canvasEl) return { x: 0, y: 0 };
   const rect = canvasEl.getBoundingClientRect();
+  const { clientX, clientY } = getClientPos(evt);
   return {
-    x: ((evt.clientX - rect.left) / rect.width) * canvasEl.width,
-    y: ((evt.clientY - rect.top) / rect.height) * canvasEl.height
+    x: ((clientX - rect.left) / rect.width) * canvasEl.width,
+    y: ((clientY - rect.top) / rect.height) * canvasEl.height,
   };
 }
 
@@ -171,4 +184,40 @@ export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement
 }
 export function onMouseUpHomography() {
   draggingIndex.value = null;
+}
+
+
+function getClientPos(e: MouseEvent | TouchEvent): { clientX: number; clientY: number } {
+  if (e instanceof MouseEvent) {
+    return { clientX: e.clientX, clientY: e.clientY };
+  } else {
+    const t = e.touches[0] || e.changedTouches[0];
+    return { clientX: t.clientX, clientY: t.clientY };
+  }
+}
+
+
+// --- Wrapper versions for touch, reusing mouse logic ---
+export function onTouchStart(e: TouchEvent, canvas: HTMLCanvasElement) {
+  console.log("onTouchStart");
+  const { clientX, clientY } = getClientPos(e);
+  console.log("Touch pos:", clientX, clientY);
+  onPointerDown(clientX, clientY, canvas);
+  e.preventDefault();
+}
+
+export function onTouchMove(e: TouchEvent, canvas: HTMLCanvasElement) {
+  console.log("onTouchMove");
+  const { clientX, clientY } = getClientPos(e);
+  if (dragging.value) {
+    onPointerMove(clientX, clientY, canvas);
+    e.preventDefault();
+  }
+}
+
+export function onTouchEnd(e: TouchEvent) {
+  if (dragging.value) {
+    dragging.value = null;
+    e.preventDefault();
+  }
 }
