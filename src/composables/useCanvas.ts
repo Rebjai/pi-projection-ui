@@ -183,17 +183,6 @@ export function drawHomographyCanvas() {
     offsetY = 0;
   }
 
-  ctx.drawImage(
-    img,
-    0,
-    0,
-    img.width,
-    img.height,
-    offsetX,
-    offsetY,
-    drawWidth,
-    drawHeight
-  );
 
   console.log(
     "Canvas:",
@@ -208,6 +197,7 @@ export function drawHomographyCanvas() {
     offsetX,
     offsetY
   );
+  drawGrid(ctx, canvasWidth, canvasHeight, 25);
 
   // --- Initialize homography points if missing ---
   if (homographyPoints.value.length !== 4) {
@@ -218,6 +208,21 @@ export function drawHomographyCanvas() {
       [offsetX, offsetY + drawHeight],
     ];
   }
+
+  // --- Draw path connecting homography points ---
+  ctx.strokeStyle = "blue";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  homographyPoints.value.forEach((p, i) => {
+    if (i === 0) {
+      ctx.moveTo(p[0], p[1]);
+    } else {
+      ctx.lineTo(p[0], p[1]);
+    }
+  });
+  ctx.closePath();
+  ctx.stroke();
+
 
   // --- Draw draggable corner handles ---
   const handles = getHandlesHomography(homographyPoints.value);
@@ -232,4 +237,23 @@ export function drawHomographyCanvas() {
 
     ctx.fillRect(h.x - 5, h.y - 5, 10, 10);
   });
+}
+
+function drawGrid(ctx: CanvasRenderingContext2D, width: number, height: number, gridSize: number) {
+  ctx.strokeStyle = "#BBB";
+  ctx.lineWidth = 1;
+
+  for (let x = 0; x <= width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
 }
