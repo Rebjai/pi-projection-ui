@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import type { Client, ClientConfig, DisplayConfig } from "@/types/projection";
+import { homographyPoints, previewCanvas } from "./useCanvas";
 
 export const clients = ref<Client[]>([]);
 export const images = ref<{ uploads: string[] }>({ uploads: [] });
@@ -140,7 +141,7 @@ export async function pushAllConfigsToClients(clients: Client[]) {
   }
 }
 
-export async function setHomographyForClientDisplay(client: Client, display: DisplayConfig, points: number[][]) {
+export async function setHomographyForClientDisplay(client: Client, display: DisplayConfig, points: number[][] = homographyPoints.value || []) {
   try {
     if (!client.config) {
       throw new Error("Client config is undefined");
@@ -164,5 +165,84 @@ export async function saveClientConfig(client: Client) {
     await updateClientConfig(client, currentConfig);
   } catch (err) {
     console.error("Error saving client config", err);
+  }
+}
+
+export function resetClientConfig(client: Client) {
+      // example client config
+        // " {
+        //     "client_id": "pi-01",
+        //     "config": {
+        //         "assignments": [
+        //             {
+        //                 "display_output": "card1-DP-2",
+        //                 "rect": {
+        //                     "h": 83,
+        //                     "w": 496,
+        //                     "x": 853.8333339691162,
+        //                     "y": 16.013885498046875
+        //                 }
+        //             }
+        //         ],
+        //         "client_canvas_size": {
+        //             "height": 1367,
+        //             "width": 1367
+        //         },
+        //         "client_id": "pi-01",
+        //         "displays": [
+        //             {
+        //                 "active": true,
+        //                 "name": "card1-DP-2",
+        //                 "resolution": {
+        //                     "height": 1440,
+        //                     "width": 2560
+        //                 },
+        //                 "status": "connected"
+        //             }
+        //         ],
+        //         "homographies": {
+        //             "card1-DP-2": {
+        //                 "matrix": [
+        //                     [
+        //                         0.3635831750541259,
+        //                         0.17705501044122854
+        //                     ],
+        //                     [
+        //                         0.7709439058282997,
+        //                         0.10253079110435967
+        //                     ],
+        //                     [
+        //                         0.7782326664186925,
+        //                         0.8002758705145345
+        //                     ],
+        //                     [
+        //                         0.379268278858621,
+        //                         0.7869399019440089
+        //                     ]
+        //                 ]
+        //             }
+        //         },
+        //         "is_connected": true,
+        //         "last_seen": 1758095401,
+        //         "server_url": "http://127.0.0.1:5000"
+        //     }
+        // },
+  try {
+    if (!client.config) {
+      throw new Error("Client config is undefined");
+    }
+    // Reset to default values conserving client_id, reseting homographies and assignments to empty
+    const newConfig: ClientConfig = {
+      client_id: client.client_id,
+      homographies: {},
+      assignments: [],
+      displays: client.config.displays || [],
+      client_canvas_size: { width: previewCanvas.value!.width, height: previewCanvas.value!.height },
+      last_seen: client.config.last_seen,
+      is_connected: client.config.is_connected,
+    };
+    updateClientConfig(client, newConfig);
+  } catch (err) {
+    console.error("Error resetting client config", err);
   }
 }

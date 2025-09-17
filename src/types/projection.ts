@@ -34,7 +34,7 @@ export interface ClientConfig {
   homographies: { [key: string]: Homography };
   last_seen: string;
   is_connected: boolean;
-  client_canvas_size: { width: number; height: number };
+  client_canvas_size: { width: number; height: number } ;
 }
 
 export interface Client {

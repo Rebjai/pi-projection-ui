@@ -7,7 +7,8 @@ import { clients, images, loading, fetchData, selectedClient,
   showPreviousImageForAllClients,
   stopPresentationModeForAllClients,
   pushAllConfigsToClients,
-  setHomographyForClientDisplay
+  setHomographyForClientDisplay,
+  resetClientConfig
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
@@ -55,6 +56,10 @@ function setSelectedDisplay(display: DisplayConfig | null) {
     // convert homography matrix to points
     const points = homography.matrix
     homographyPoints.value = points;
+  }
+  else {
+    // default points
+    homographyPoints.value = undefined
   }
   // draw homography canvas
   drawHomographyCanvas();
@@ -139,6 +144,9 @@ watch(loading, async (newVal) => {
             <!-- save config button below-->
             <button v-if="typeof client !== 'string'" @click.stop="saveClientConfig(client)"
               class="mt-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"> Save Config </button>
+            <!-- reset Config button below-->
+            <button v-if="typeof client !== 'string'" @click.stop="resetClientConfig(client)"
+              class="mt-2 ml-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"> Reset Config </button>
              
           </li>
         </ul>

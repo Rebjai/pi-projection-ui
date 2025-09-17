@@ -11,7 +11,7 @@ export const selectedDisplay = ref<DisplayConfig | null>(null);
 export const selectedImage = ref<string | null>(null);
 export const cachedImage = ref<HTMLImageElement | null>(null);
 export const cachedSrc = ref<string | null>(null);
-export const homographyPoints = ref<number[][]>([]);
+export const homographyPoints = ref<number[][] | undefined>(undefined);
 export const selectedDisplayImage = ref<string | null>(null);
 export const cachedDisplayImage = ref<HTMLImageElement | null>(null);
 
@@ -76,6 +76,7 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
 
   // Draw rects after image
   rects.value.forEach((r) => {
+    console.log("++++++++++++++++Drawing rect:", r);
     ctx.strokeStyle = isRectFromSelectedClient(r) ? "blue" : "green";
     ctx.lineWidth = 2;
     const client = clients.find(c => c.client_id === r.client_id);
@@ -98,6 +99,7 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     r.rect.w = r.rect.w * scaleUniform;
     r.rect.h = r.rect.h * scaleUniform;
     ctx.strokeRect(r.rect.x, r.rect.y, r.rect.w, r.rect.h);
+    console.log("Scaled rect to", r.rect);
     client.config.client_canvas_size.width = canvas.width;
 
     //update client canvas size to current canvas size
@@ -107,6 +109,7 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     const handles = getHandles(r.rect);
     ctx.fillStyle = "red";
     handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
+    console.log("Drawn rect for client", client.client_id, "at", r.rect);
   });
 }
 
@@ -201,6 +204,7 @@ export function drawHomographyCanvas() {
 
   // --- Initialize homography points if missing ---
   let scaledPoints = [] as number[][];
+  if (!homographyPoints.value) homographyPoints.value = [];
   if (homographyPoints.value.length !== 4) {
     console.log("Initializing homography points");
     homographyPoints.value = [

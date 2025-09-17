@@ -6,7 +6,9 @@ export const rects = ref<RectConfig[]>([]);
 
 export function populateRects() {
   clients.value.forEach((client, index) => {
+    console.log("Populating rects for client", client.client_id);
     if (!client.config?.assignments?.length || client.config.assignments.length != client.config.displays?.length) {
+      console.log("Pushing default rects for client", client.client_id);
       pushRectsFromDisplayConfig(client, index);
       // let mock5displays: DisplayConfig[] = [];
       // for (let i = 0; i < 5; i++) {
@@ -24,6 +26,7 @@ export function populateRects() {
       // pushRectsFromDisplayConfig(client, index);
     }
     if (!client.config?.assignments) return;
+    console.log("Client assignments:", client.config.assignments);
     client.config.assignments.forEach((assignment) => {
       rects.value.push({
         id: `${client.client_id}-${assignment.display_output}`,
@@ -36,7 +39,9 @@ export function populateRects() {
 }
 
 function pushRectsFromDisplayConfig(client: Client, clientIndex: number) {
+  console.log("Pushing rects from display config for client", client.client_id);
   if (!client.config?.displays) return;
+  console.log("Client displays:", client.config.displays);
   const displays = client.config.displays;
   displays.forEach((display, displayIndex) => {
     // check if assignments already has this display

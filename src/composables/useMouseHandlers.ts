@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { rects } from "./useRects";
-import { drawCanvas } from "./useCanvas";
+import { drawCanvas, homographyPoints } from "./useCanvas";
 import type { Client, Rect } from "@/types/projection";
 
 export const draggingIndex = ref<number | null>(null);
@@ -143,7 +143,7 @@ export function getMousePos(evt: MouseEvent, canvasEl: HTMLCanvasElement | null 
   };
 }
 
-export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
+export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
   const pos = getMousePos(evt, canvas);
 
   // Convert normalized → canvas coords for hit testing
@@ -160,7 +160,7 @@ export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement
   );
 }
 
-export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
+export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
   if (draggingIndex.value === null || draggingIndex.value === -1) return;
   console.log("onMouseMoveHomography", draggingIndex.value);
   const pos = getMousePos(evt, canvas);
