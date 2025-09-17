@@ -3,12 +3,15 @@ import { rects } from "./useRects";
 import { drawCanvas } from "./useCanvas";
 import type { Client, Rect } from "@/types/projection";
 
+export const draggingIndex = ref<number | null>(null);
 export const dragging = ref<{
     rectIndex: number;
     corner: string;
     offsetX?: number;
     offsetY?: number;
 } | null>(null);
+
+const edgeThreshold = 6;
 
 
 function getHandles(rect: Rect) {
@@ -18,6 +21,14 @@ function getHandles(rect: Rect) {
     { corner: "bl", x: rect.x, y: rect.y + rect.h },
     { corner: "br", x: rect.x + rect.w, y: rect.y + rect.h },
   ];
+}
+
+export function getHandlesHomography(points: number[][]) {
+  return points.map((p, index) => ({
+    corner: `p${index}`,
+    x: p[0],
+    y: p[1],
+  }));
 }
 
 // Mouse handling
@@ -63,7 +74,7 @@ export function onMouseDown(e: MouseEvent, canvas: HTMLCanvasElement) {
   }
 }
 
-export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement, clients: Client[]) {
+export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement) {
   if (!dragging.value) return;
 
   const rect = canvas.getBoundingClientRect();
@@ -117,10 +128,39 @@ export function onMouseMove(e: MouseEvent, canvas: HTMLCanvasElement, clients: C
       r.y = my - dragging.value.offsetY!;
       break;
   }
-
-  drawCanvas(clients)
 }
 
 export function onMouseUp() {
     dragging.value = null;
+}
+
+export function getMousePos(evt: MouseEvent, canvasEl: HTMLCanvasElement | null = null) {
+  if (!canvasEl) return { x: 0, y: 0 };
+  const rect = canvasEl.getBoundingClientRect();
+  return {
+    x: ((evt.clientX - rect.left) / rect.width) * canvasEl.width,
+    y: ((evt.clientY - rect.top) / rect.height) * canvasEl.height
+  };
+}
+
+export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
+  console.log("onMouseDownHomography", points);
+  const pos = getMousePos(evt, canvas);
+  const handles = getHandlesHomography(points);
+  const radius = 10;
+  draggingIndex.value = handles.findIndex(h =>
+    Math.abs(h.x - pos.x) < radius && Math.abs(h.y - pos.y) < radius
+  );
+  console.log("Dragging index:", draggingIndex.value);
+}
+
+export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][]) {
+  if (draggingIndex.value === null || draggingIndex.value === -1) return;
+  console.log("onMouseMoveHomography", draggingIndex.value);
+  const pos = getMousePos(evt, canvas);
+  points[draggingIndex.value] = [pos.x, pos.y];
+  console.log("Updated point:", points[draggingIndex.value]);
+}
+export function onMouseUpHomography() {
+  draggingIndex.value = null;
 }

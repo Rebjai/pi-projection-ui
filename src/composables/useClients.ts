@@ -139,3 +139,30 @@ export async function pushAllConfigsToClients(clients: Client[]) {
     console.error("Error pushing configs to clients", err);
   }
 }
+
+export async function setHomographyForClientDisplay(client: Client, displayName: string, points: [number, number][]) {
+  try {
+    if (!client.config) {
+      throw new Error("Client config is undefined");
+    }
+    let currentConfig = client.config;
+    if (!currentConfig) return;
+    let newHomographies = { ...currentConfig.homographies, [displayName]: { matrix: points } }
+    let newConfig = { ...currentConfig, homographies: newHomographies };
+    await updateClientConfig(client, newConfig);
+  } catch (err) {
+    console.error("Error setting homography for client display", err);
+  }
+}
+
+export async function saveClientConfig(client: Client) {
+  try {
+    if (!client.config) {
+      throw new Error("Client config is undefined");
+    }
+    let currentConfig = client.config;
+    await updateClientConfig(client, currentConfig);
+  } catch (err) {
+    console.error("Error saving client config", err);
+  }
+}

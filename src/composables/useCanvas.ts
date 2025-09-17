@@ -1,11 +1,19 @@
 import { ref } from "vue";
 import { rects, isRectFromSelectedClient } from "./useRects";
-import type { Client, Rect } from "@/types/projection";
+import { type DisplayConfig, type Client, type Rect } from "@/types/projection";
+import { draggingIndex, getHandlesHomography } from "./useMouseHandlers";
+import { selectedClient } from "./useClients";
+
 
 export const previewCanvas = ref<HTMLCanvasElement | null>(null);
+export const homographyCanvas = ref<HTMLCanvasElement | null>(null);
+export const selectedDisplay = ref<DisplayConfig | null>(null);
 export const selectedImage = ref<string | null>(null);
 export const cachedImage = ref<HTMLImageElement | null>(null);
 export const cachedSrc = ref<string | null>(null);
+export const homographyPoints = ref<number[][]>([]);
+export const selectedDisplayImage = ref<string | null>(null);
+export const cachedDisplayImage = ref<HTMLImageElement | null>(null);
 
 export function setSelectedImage(img: string) {
   selectedImage.value = img;
@@ -89,7 +97,6 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     r.rect.y = r.rect.y * scaleUniform + y;
     r.rect.w = r.rect.w * scaleUniform;
     r.rect.h = r.rect.h * scaleUniform;
-    
     ctx.strokeRect(r.rect.x, r.rect.y, r.rect.w, r.rect.h);
     client.config.client_canvas_size.width = canvas.width;
 
@@ -100,5 +107,129 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     const handles = getHandles(r.rect);
     ctx.fillStyle = "red";
     handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
+  });
+}
+
+export function drawHomographyCanvas() {
+  console.log("drawHomographyCanvas called");
+
+  // --- Guard Clauses ---
+  if (!selectedDisplay.value) return;
+  if (!homographyCanvas.value) return;
+  if (!selectedDisplayImage.value) return;
+  if (!selectedImage.value) return;
+
+  const parent = homographyCanvas.value.parentElement;
+  if (!parent) return;
+
+  // --- Build image source path ---
+  const imageName = selectedImage.value
+    .replace(/\.[^/.]+$/, "") // remove extension
+    .replace(/\s+/g, "_");    // replace spaces with underscores
+
+  const tileName = `client_${selectedClient.value?.client_id}_tile_${selectedDisplay.value.name}.png`;
+  const src = `http://localhost:5000/tiles/${imageName}/${tileName}`;
+
+  // --- Load and cache image ---
+  if (!cachedDisplayImage.value || cachedDisplayImage.value.src !== src) {
+    const img = new Image();
+    img.src = src;
+
+    img.onload = () => {
+      console.log("Loaded display image for homography:", src);
+      cachedDisplayImage.value = img;
+      drawHomographyCanvas(); // Redraw after loading
+    };
+
+    img.onerror = (err) => {
+      console.error("Error loading display image", err);
+    };
+
+    return; // Exit until image is ready
+  }
+
+  // --- Resize canvas based on display resolution aspect ratio ---
+  const displayAspect =
+    selectedDisplay.value.resolution.width /
+    selectedDisplay.value.resolution.height;
+
+  const canvasWidth = parent.clientWidth;
+  const canvasHeight = canvasWidth / displayAspect;
+
+  homographyCanvas.value.width = canvasWidth;
+  homographyCanvas.value.height = canvasHeight;
+
+  const ctx = homographyCanvas.value.getContext("2d")!;
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  // --- Fit image to canvas while preserving image aspect ratio ---
+  const img = cachedDisplayImage.value;
+  const imgAspect = img.width / img.height;
+  const canvasAspect = canvasWidth / canvasHeight;
+
+  let drawWidth, drawHeight, offsetX, offsetY;
+
+  if (imgAspect > canvasAspect) {
+    // Image is wider → fit width
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imgAspect;
+    offsetX = 0;
+    offsetY = (canvasHeight - drawHeight) / 2;
+  } else {
+    // Image is taller → fit height
+    drawHeight = canvasHeight;
+    drawWidth = canvasHeight * imgAspect;
+    offsetX = (canvasWidth - drawWidth) / 2;
+    offsetY = 0;
+  }
+
+  ctx.drawImage(
+    img,
+    0,
+    0,
+    img.width,
+    img.height,
+    offsetX,
+    offsetY,
+    drawWidth,
+    drawHeight
+  );
+
+  console.log(
+    "Canvas:",
+    canvasWidth,
+    "x",
+    canvasHeight,
+    "| Image drawn at:",
+    drawWidth,
+    "x",
+    drawHeight,
+    "offset:",
+    offsetX,
+    offsetY
+  );
+
+  // --- Initialize homography points if missing ---
+  if (homographyPoints.value.length !== 4) {
+    homographyPoints.value = [
+      [offsetX, offsetY],
+      [offsetX + drawWidth, offsetY],
+      [offsetX + drawWidth, offsetY + drawHeight],
+      [offsetX, offsetY + drawHeight],
+    ];
+  }
+
+  // --- Draw draggable corner handles ---
+  const handles = getHandlesHomography(homographyPoints.value);
+
+  handles.forEach((h, index) => {
+    ctx.fillStyle =
+      draggingIndex.value !== null &&
+      draggingIndex.value !== -1 &&
+      draggingIndex.value === index
+        ? "orange"
+        : "red";
+
+    ctx.fillRect(h.x - 5, h.y - 5, 10, 10);
   });
 }

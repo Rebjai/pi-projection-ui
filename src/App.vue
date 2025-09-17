@@ -9,9 +9,9 @@ import { clients, images, loading, fetchData, selectedClient,
   pushAllConfigsToClients
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
-import { previewCanvas, selectedImage, setSelectedImage, drawCanvas } from "@/composables/useCanvas";
-import { onMouseDown, onMouseMove, onMouseUp } from "@/composables/useMouseHandlers";
-import type { Assignment, Client, ClientConfig } from "@/types/projection";
+import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
+import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography } from "@/composables/useMouseHandlers";
+import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 
 function handleClientClick(client: Client) {
@@ -35,6 +35,23 @@ function saveClientConfig(client: Client) {
   updateClientConfig(client, newConfig);
 }
 
+function setSelectedDisplay(display: DisplayConfig | null) {
+  if (!selectedClient.value || typeof selectedClient.value === 'string') return;
+  if (display === null) {
+    selectedDisplay.value = null;
+    return;
+  }
+  // find the display config from selectedClient
+  const foundDisplay = selectedClient.value.config?.displays.find(d => d.name === display.name);
+  if (!foundDisplay) return;
+  selectedDisplay.value = foundDisplay;
+  selectedDisplayImage.value = selectedImage.value;
+  // draw homography canvas
+  drawHomographyCanvas();
+}
+
+
+
 onMounted(() => {
   fetchData(populateRects, setSelectedImage);
 });
@@ -46,7 +63,11 @@ watch(loading, async (newVal) => {
   if (!newVal && previewCanvas.value) {
     const canvas = previewCanvas.value;
     canvas.addEventListener("mousedown", (e) => onMouseDown(e, canvas));
-    canvas.addEventListener("mousemove", (e) => onMouseMove(e, canvas, clients.value));
+    canvas.addEventListener("mousemove", (e) => {
+      onMouseMove(e, canvas)
+      if (dragging.value)
+      drawCanvas(clients.value)
+    });
     canvas.addEventListener("mouseup", onMouseUp);
     drawCanvas(clients.value);
   }
@@ -92,7 +113,19 @@ watch(loading, async (newVal) => {
             }"
             @click="handleClientClick(client)">
             <div class="font-medium">{{ client.client_id || client }}</div>
-            <div class="text-sm text-gray-600" v-if="client.config"> Config: {{ client.config }} </div>
+            <div class="text-sm text-gray-600" v-if="client.config"> 
+              <h3>Config:</h3>
+              <div>Canvas Size: {{ client.config.client_canvas_size.width }} x {{ client.config.client_canvas_size.height }}</div>
+              <div v-if="selectedClient && typeof client !== 'string' && selectedClient.client_id === client.client_id">
+                <h4>Connected Displays: </h4>
+                <ul class="list-disc list-inside">
+                  <li v-for="display in client.config.displays" :key="display.name" @click.stop="setSelectedDisplay(display)"
+                    :class="{'font-bold': selectedDisplay === display}">
+                    {{ display.name }} - {{ display.status }} - {{ display.resolution.width }}x{{ display.resolution.height }}
+                  </li>
+                </ul>
+              </div>
+            </div>
             <!-- save config button below-->
             <button v-if="typeof client !== 'string'" @click.stop="saveClientConfig(client)"
               class="mt-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"> Save Config </button>
@@ -119,6 +152,12 @@ watch(loading, async (newVal) => {
               class="w-full h-26 object-contain rounded shadow" />
           </div>
         </div>
+      </div>
+      <!-- select and set homography for selected display in another canvas only show if selectedDisplay is not null -->
+      <div v-if="selectedDisplay" class="col-span-2 flex flex-col items-center mt-4">
+        <h2 class="text-xl font-semibold mb-2">Set Homography for {{ selectedDisplay.name }}</h2>
+        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)" @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()" @mouseup="onMouseUpHomography()"
+        ></canvas>
       </div>
 
       <!-- Projection Preview -->
