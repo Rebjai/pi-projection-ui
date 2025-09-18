@@ -12,7 +12,7 @@ import { clients, images, loading, fetchData, selectedClient,
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
-import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove } from "@/composables/useMouseHandlers";
+import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove, onTouchStartHomography, onTouchMoveHomography } from "@/composables/useMouseHandlers";
 import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 
@@ -185,7 +185,13 @@ watch(loading, async (newVal) => {
         <!-- button to save homography points to selectedClient config -->
         <button @click="setHomographyForClientDisplay(selectedClient!, selectedDisplay!, homographyPoints)"
           class="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Save Homography </button>
-        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)" @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()" @mouseup="onMouseUpHomography()"
+        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" 
+        @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)" 
+        @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()" 
+        @mouseup="onMouseUpHomography()"
+        @touchstart="onTouchStartHomography($event, homographyCanvas!, homographyPoints)"
+        @touchmove="onTouchMoveHomography($event, homographyCanvas!); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
+        @touchend="onMouseUpHomography()"
         ></canvas>
       </div>
 

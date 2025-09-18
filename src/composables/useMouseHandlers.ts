@@ -156,8 +156,9 @@ export function getMousePos(evt: MouseEvent | TouchEvent, canvasEl: HTMLCanvasEl
   };
 }
 
-export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
-  const pos = getMousePos(evt, canvas);
+export function onPointerDownHomography( clientX: number, clientY: number, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  const pos = { x: clientX, y: clientY };
+  console.log("onPointerDownHomography", pos);
 
   // Convert normalized → canvas coords for hit testing
   const handles = getHandlesHomography(
@@ -166,17 +167,19 @@ export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement
       ny * canvas.height
     ])
   );
+  console.log("Handles:", handles);
 
   const radius = 10;
   draggingIndex.value = handles.findIndex(
     (h) => Math.abs(h.x - pos.x) < radius && Math.abs(h.y - pos.y) < radius
   );
+  console.log("onPointerDownHomography", draggingIndex.value);
 }
 
-export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+export function onPointerMoveHomography(clientX: number, clientY: number, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
   if (draggingIndex.value === null || draggingIndex.value === -1) return;
   console.log("onMouseMoveHomography", draggingIndex.value);
-  const pos = getMousePos(evt, canvas);
+  const pos = { x: clientX, y: clientY };
   const nx = pos.x / canvas.width;
   const ny = pos.y / canvas.height;
   points[draggingIndex.value] = [nx, ny];
@@ -186,11 +189,27 @@ export function onMouseUpHomography() {
   draggingIndex.value = null;
 }
 
+export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  console.log("onMouseDownHomography");
+  const mousePos = getMousePos(evt, canvas);
+  onPointerDownHomography(mousePos.x, mousePos.y, canvas, points);
+}
+
+export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  if (draggingIndex.value !== null && draggingIndex.value !== -1) {
+    console.log("onMouseMoveHomography");
+    const mousePos = getMousePos(evt, canvas);
+    onPointerMoveHomography(mousePos.x, mousePos.y, canvas, points);
+    evt.preventDefault();
+  }
+}
+
 
 function getClientPos(e: MouseEvent | TouchEvent): { clientX: number; clientY: number } {
   if (e instanceof MouseEvent) {
     return { clientX: e.clientX, clientY: e.clientY };
   } else {
+    console.log("Touch event", e);
     const t = e.touches[0] || e.changedTouches[0];
     return { clientX: t.clientX, clientY: t.clientY };
   }
@@ -218,6 +237,23 @@ export function onTouchMove(e: TouchEvent, canvas: HTMLCanvasElement) {
 export function onTouchEnd(e: TouchEvent) {
   if (dragging.value) {
     dragging.value = null;
+    e.preventDefault();
+  }
+}
+
+export function onTouchStartHomography(e: TouchEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  console.log("onTouchStartHomography");
+  const mousePos = getMousePos(e, canvas);
+  onPointerDownHomography(mousePos.x, mousePos.y, canvas, points);
+  e.preventDefault();
+  
+}
+
+export function onTouchMoveHomography(e: TouchEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  if (draggingIndex.value !== null && draggingIndex.value !== -1) {
+    console.log("onTouchMoveHomography");
+    const mousePos = getMousePos(e, canvas);
+    onPointerMoveHomography(mousePos.x, mousePos.y, canvas, points);
     e.preventDefault();
   }
 }
