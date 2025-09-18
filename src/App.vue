@@ -92,6 +92,10 @@ watch(loading, async (newVal) => {
       drawCanvas(clients.value)
     }, { passive: false });
     canvas.addEventListener("touchend", onMouseUp, { passive: false });
+    canvas.addEventListener("onResize", () => {
+      if (previewCanvas.value)
+      drawCanvas(clients.value);
+    });
     drawCanvas(clients.value);
   }
 });

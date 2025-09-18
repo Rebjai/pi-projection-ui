@@ -74,13 +74,7 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
   const y = (canvas.height - img.height * scale) / 2;
   ctx.drawImage(img, 0, 0, img.width, img.height, x, y, img.width * scale, img.height * scale);
 
-  // Draw rects after image
-  rects.value.forEach((r) => {
-    console.log("++++++++++++++++Drawing rect:", r);
-    ctx.strokeStyle = isRectFromSelectedClient(r) ? "blue" : "green";
-    ctx.lineWidth = 2;
-    const client = clients.find(c => c.client_id === r.client_id);
-    if (!client) return;
+  clients.forEach(client => {
     if (!client.config) return;
     if (!client.config.client_canvas_size) {
       client.config.client_canvas_size = { width: canvas.width, height: canvas.height };
@@ -93,23 +87,30 @@ function renderCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     const scaleY = canvas.height / canvasH;
     // use the smaller scale to maintain aspect ratio
     const scaleUniform = Math.min(scaleX, scaleY);
-    // update rect in rects to scaled version for hit detection
-    r.rect.x = r.rect.x * scaleUniform + x;
-    r.rect.y = r.rect.y * scaleUniform + y;
-    r.rect.w = r.rect.w * scaleUniform;
-    r.rect.h = r.rect.h * scaleUniform;
-    ctx.strokeRect(r.rect.x, r.rect.y, r.rect.w, r.rect.h);
-    console.log("Scaled rect to", r.rect);
-    client.config.client_canvas_size.width = canvas.width;
+
+    const clientRects = rects.value.filter(r => r.client_id === client.client_id);
+    clientRects.forEach(r => {
+      console.log("++++++++++++++++Drawing rect:", r);
+      ctx.strokeStyle = isRectFromSelectedClient(r) ? "blue" : "green";
+      ctx.lineWidth = 2;
+      // scale rect to current canvas size
+      r.rect.x = r.rect.x * scaleUniform + x;
+      r.rect.y = r.rect.y * scaleUniform + y;
+      r.rect.w = r.rect.w * scaleUniform;
+      r.rect.h = r.rect.h * scaleUniform;
+      ctx.strokeRect(r.rect.x, r.rect.y, r.rect.w, r.rect.h);
+      console.log("Scaled rect to", r.rect);
+
+      // Draw handles (corners)
+      const handles = getHandles(r.rect);
+      ctx.fillStyle = "red";
+      handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
+      console.log("Drawn rect for client", client.client_id, "at", r.rect);
+    });
 
     //update client canvas size to current canvas size
+    client.config.client_canvas_size.width = canvas.width;
     client.config.client_canvas_size.height = canvas.height;
-
-    // Draw handles (corners)
-    const handles = getHandles(r.rect);
-    ctx.fillStyle = "red";
-    handles.forEach((h) => ctx.fillRect(h.x - 4, h.y - 4, 8, 8));
-    console.log("Drawn rect for client", client.client_id, "at", r.rect);
   });
 }
 
