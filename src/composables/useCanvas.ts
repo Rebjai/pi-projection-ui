@@ -201,7 +201,7 @@ export function drawHomographyCanvas() {
     offsetX,
     offsetY
   );
-  drawGrid(ctx, canvasWidth, canvasHeight, 25);
+  drawGrid(ctx, canvasWidth, canvasHeight, homographyCanvas.value.width / 50);
 
   // --- Initialize homography points if missing ---
   let scaledPoints = [] as number[][];
