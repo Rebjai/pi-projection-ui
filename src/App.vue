@@ -75,6 +75,12 @@ watch(selectedImage, (newImage) => drawCanvas(clients.value, newImage));
 watch(selectedClient, () => drawCanvas(clients.value));
 watch(loading, async (newVal) => {
   await nextTick();
+  window.addEventListener("resize", () => {
+    if (previewCanvas.value)
+    drawCanvas(clients.value);
+   if (homographyCanvas.value)
+    drawHomographyCanvas();
+  });
   if (!newVal && previewCanvas.value) {
     const canvas = previewCanvas.value;
     canvas.addEventListener("mousedown", (e) => onMouseDown(e, canvas));
@@ -92,10 +98,6 @@ watch(loading, async (newVal) => {
       drawCanvas(clients.value)
     }, { passive: false });
     canvas.addEventListener("touchend", onMouseUp, { passive: false });
-    canvas.addEventListener("onResize", () => {
-      if (previewCanvas.value)
-      drawCanvas(clients.value);
-    });
     drawCanvas(clients.value);
   }
 });
