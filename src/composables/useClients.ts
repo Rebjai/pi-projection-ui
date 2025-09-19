@@ -6,6 +6,8 @@ export const clients = ref<Client[]>([]);
 export const images = ref<{ uploads: string[] }>({ uploads: [] });
 export const loading = ref(true);
 export const selectedClient = ref<Client | null>(null);
+export const selectedDisplay = ref<DisplayConfig | null>(null);
+export const isCalibrationMode = ref(false);
 
 export function setSelectedClient(client: Client) {
   selectedClient.value = client;
@@ -244,5 +246,41 @@ export function resetClientConfig(client: Client) {
     updateClientConfig(client, newConfig);
   } catch (err) {
     console.error("Error resetting client config", err);
+  }
+}
+
+export async function enterCalibrationMode( client: Client = selectedClient.value!, display: DisplayConfig = selectedDisplay.value!) {
+  if (!client || !display) return;
+  isCalibrationMode.value = true;
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/calibrate/${client.client_id}/${display.name}`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to enter calibration mode: ${res.statusText}`);
+    }
+
+  } catch (err) {
+    console.error("Error entering calibration mode", err);
+  }
+}
+
+export async function exitCalibrationMode( client: Client = selectedClient.value!, display: DisplayConfig = selectedDisplay.value!) {
+  if (!client) return;
+  isCalibrationMode.value = false;
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/calibrate/${client.client_id}/${display.name}/exit`, {
+      method: "POST",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to exit calibration mode: ${res.statusText}`);
+    }
+
+  } catch (err) {
+    console.error("Error exiting calibration mode", err);
   }
 }

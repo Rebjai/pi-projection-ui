@@ -2,16 +2,20 @@
 import { onMounted, watch, nextTick, ref } from "vue";
 import { clients, images, loading, fetchData, selectedClient, 
   setSelectedClient, updateClientConfig, sliceImagesForClients,
+  selectedDisplay,
   startPresentationModeForAllClients,
   showNextImageForAllClients,
   showPreviousImageForAllClients,
   stopPresentationModeForAllClients,
   pushAllConfigsToClients,
   setHomographyForClientDisplay,
-  resetClientConfig
+  resetClientConfig,
+  isCalibrationMode,
+  exitCalibrationMode,
+  enterCalibrationMode
  } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
-import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, selectedDisplay, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
+import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove, onTouchStartHomography, onTouchMoveHomography } from "@/composables/useMouseHandlers";
 import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
@@ -188,6 +192,10 @@ watch(loading, async (newVal) => {
       <!-- select and set homography for selected display in another canvas only show if selectedDisplay is not null -->
       <div v-if="selectedDisplay" class="col-span-2 flex flex-col items-center mt-4">
         <h2 class="text-xl font-semibold mb-2">Set Homography for {{ selectedDisplay.name }}</h2>
+        <button @click="isCalibrationMode ? exitCalibrationMode( selectedClient!, selectedDisplay!) : enterCalibrationMode( selectedClient!, selectedDisplay!)"
+          class="mb-2 px-3 py-1" :class="isCalibrationMode ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'">
+          {{ isCalibrationMode ? 'Exit Calibration Mode' : 'Enter Calibration Mode' }}
+        </button>
         <!-- button to save homography points to selectedClient config -->
         <button @click="setHomographyForClientDisplay(selectedClient!, selectedDisplay!, homographyPoints)"
           class="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Save Homography </button>

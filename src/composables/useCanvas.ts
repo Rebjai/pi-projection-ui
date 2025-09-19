@@ -2,12 +2,11 @@ import { ref } from "vue";
 import { rects, isRectFromSelectedClient } from "./useRects";
 import { type DisplayConfig, type Client, type Rect } from "@/types/projection";
 import { draggingIndex, getHandlesHomography } from "./useMouseHandlers";
-import { selectedClient } from "./useClients";
+import { selectedClient, selectedDisplay } from "./useClients";
 
 
 export const previewCanvas = ref<HTMLCanvasElement | null>(null);
 export const homographyCanvas = ref<HTMLCanvasElement | null>(null);
-export const selectedDisplay = ref<DisplayConfig | null>(null);
 export const selectedImage = ref<string | null>(null);
 export const cachedImage = ref<HTMLImageElement | null>(null);
 export const cachedSrc = ref<string | null>(null);
