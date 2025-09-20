@@ -8,6 +8,7 @@ export const loading = ref(true);
 export const selectedClient = ref<Client | null>(null);
 export const selectedDisplay = ref<DisplayConfig | null>(null);
 export const isCalibrationMode = ref(false);
+export const isSlicing = ref(false);
 
 export function setSelectedClient(client: Client) {
   selectedClient.value = client;
@@ -56,6 +57,7 @@ export async function updateClientConfig(client: Client, newConfig: ClientConfig
 
 export async function sliceImagesForClients() {
   try {
+    isSlicing.value = true;
     const res = await fetch(`${import.meta.env.VITE_API_URL}/slice_all`, {
       method: "POST",
     });
@@ -63,6 +65,7 @@ export async function sliceImagesForClients() {
     if (!res.ok) {
       throw new Error(`Failed to slice images: ${res.statusText}`);
     }
+    isSlicing.value = false;
 
   } catch (err) {
     console.error("Error slicing images", err);

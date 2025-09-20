@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref } from "vue";
-import { clients, images, loading, fetchData, selectedClient, 
+import {
+  clients, images, loading, fetchData, selectedClient,
   setSelectedClient, updateClientConfig, sliceImagesForClients,
   selectedDisplay,
   startPresentationModeForAllClients,
@@ -12,8 +13,9 @@ import { clients, images, loading, fetchData, selectedClient,
   resetClientConfig,
   isCalibrationMode,
   exitCalibrationMode,
-  enterCalibrationMode
- } from "@/composables/useClients";
+  enterCalibrationMode,
+  isSlicing
+} from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
 import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove, onTouchStartHomography, onTouchMoveHomography } from "@/composables/useMouseHandlers";
@@ -81,9 +83,9 @@ watch(loading, async (newVal) => {
   await nextTick();
   window.addEventListener("resize", () => {
     if (previewCanvas.value)
-    drawCanvas(clients.value);
-   if (homographyCanvas.value)
-    drawHomographyCanvas();
+      drawCanvas(clients.value);
+    if (homographyCanvas.value)
+      drawHomographyCanvas();
   });
   if (!newVal && previewCanvas.value) {
     const canvas = previewCanvas.value;
@@ -91,7 +93,7 @@ watch(loading, async (newVal) => {
     canvas.addEventListener("mousemove", (e) => {
       onMouseMove(e, canvas)
       if (dragging.value)
-      drawCanvas(clients.value)
+        drawCanvas(clients.value)
     });
     canvas.addEventListener("mouseup", onMouseUp);
     canvas.addEventListener("mouseleave", onMouseUp);
@@ -99,7 +101,7 @@ watch(loading, async (newVal) => {
     canvas.addEventListener("touchmove", (e) => {
       onTouchMove(e, canvas);
       if (dragging.value)
-      drawCanvas(clients.value)
+        drawCanvas(clients.value)
     }, { passive: false });
     canvas.addEventListener("touchend", onMouseUp, { passive: false });
     drawCanvas(clients.value);
@@ -120,8 +122,9 @@ watch(loading, async (newVal) => {
         <button v-if="selectedClient" @click="selectedClient = null; drawCanvas(clients)"
           class="mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"> Unselect Client </button>
         <!-- button to slice images for clients -->
-        <button @click="sliceImagesForClients()"
-          class="mb-2 ml-2 px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"> Slice images </button>
+        <button @click="sliceImagesForClients()" class="mb-2 ml-2 px-3 py-1 text-white rounded"
+          :class="isSlicing ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600' "
+          :disabled="isSlicing"> {{ isSlicing ? 'Slicing...' : 'Slice images' }} </button>
         <!-- push config to clients -->
         <button @click="pushAllConfigsToClients(clients)"
           class="mb-2 ml-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Push all configs </button>
@@ -137,24 +140,24 @@ watch(loading, async (newVal) => {
         <!-- send command to show next image -->
         <button @click="showNextImageForAllClients()"
           class="mb-2 ml-2 px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"> Next Image</button>
-  
-          <ul class="space-y-2">
-          <li v-for="client in clients" :key="client.client_id" class="p-3 rounded shadow"
-            :class="{
-              'bg-blue-100 cursor-pointer': selectedClient && ((typeof client === 'string' && client === selectedClient) || (typeof client !== 'string' && selectedClient && client.client_id === selectedClient.client_id)),
-              'hover:bg-gray-100 cursor-pointer': !selectedClient || (typeof client !== 'string' && (!selectedClient || client.client_id !== selectedClient.client_id))
-            }"
-            @click="handleClientClick(client)">
+
+        <ul class="space-y-2">
+          <li v-for="client in clients" :key="client.client_id" class="p-3 rounded shadow" :class="{
+            'bg-blue-100 cursor-pointer': selectedClient && ((typeof client === 'string' && client === selectedClient) || (typeof client !== 'string' && selectedClient && client.client_id === selectedClient.client_id)),
+            'hover:bg-gray-100 cursor-pointer': !selectedClient || (typeof client !== 'string' && (!selectedClient || client.client_id !== selectedClient.client_id))
+          }" @click="handleClientClick(client)">
             <div class="font-medium">{{ client.client_id || client }}</div>
-            <div class="text-sm text-gray-600" v-if="client.config"> 
+            <div class="text-sm text-gray-600" v-if="client.config">
               <h3>Config:</h3>
-              <div>Canvas Size: {{ client.config.client_canvas_size.width }} x {{ client.config.client_canvas_size.height }}</div>
+              <div>Canvas Size: {{ client.config.client_canvas_size.width }} x {{
+                client.config.client_canvas_size.height }}</div>
               <div v-if="selectedClient && typeof client !== 'string' && selectedClient.client_id === client.client_id">
                 <h4>Connected Displays: </h4>
                 <ul class="list-disc list-inside">
-                  <li v-for="display in client.config.displays" :key="display.name" @click.stop="setSelectedDisplay(display)"
-                    :class="{'font-bold': selectedDisplay === display}">
-                    {{ display.name }} - {{ display.status }} - {{ display.resolution.width }}x{{ display.resolution.height }}
+                  <li v-for="display in client.config.displays" :key="display.name"
+                    @click.stop="setSelectedDisplay(display)" :class="{ 'font-bold': selectedDisplay === display }">
+                    {{ display.name }} - {{ display.status }} - {{ display.resolution.width }}x{{
+                      display.resolution.height }}
                   </li>
                 </ul>
               </div>
@@ -165,7 +168,7 @@ watch(loading, async (newVal) => {
             <!-- reset Config button below-->
             <button v-if="typeof client !== 'string'" @click.stop="resetClientConfig(client)"
               class="mt-2 ml-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"> Reset Config </button>
-             
+
           </li>
         </ul>
       </div>
@@ -192,21 +195,22 @@ watch(loading, async (newVal) => {
       <!-- select and set homography for selected display in another canvas only show if selectedDisplay is not null -->
       <div v-if="selectedDisplay" class="col-span-2 flex flex-col items-center mt-4">
         <h2 class="text-xl font-semibold mb-2">Set Homography for {{ selectedDisplay.name }}</h2>
-        <button @click="isCalibrationMode ? exitCalibrationMode( selectedClient!, selectedDisplay!) : enterCalibrationMode( selectedClient!, selectedDisplay!)"
-          class="mb-2 px-3 py-1" :class="isCalibrationMode ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'">
+        <button
+          @click="isCalibrationMode ? exitCalibrationMode(selectedClient!, selectedDisplay!) : enterCalibrationMode(selectedClient!, selectedDisplay!)"
+          class="mb-2 px-3 py-1"
+          :class="isCalibrationMode ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'">
           {{ isCalibrationMode ? 'Exit Calibration Mode' : 'Enter Calibration Mode' }}
         </button>
         <!-- button to save homography points to selectedClient config -->
         <button @click="setHomographyForClientDisplay(selectedClient!, selectedDisplay!, homographyPoints)"
           class="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Save Homography </button>
-        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" 
-        @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)" 
-        @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()" 
-        @mouseup="onMouseUpHomography()"
-        @touchstart="onTouchStartHomography($event, homographyCanvas!, homographyPoints)"
-        @touchmove="onTouchMoveHomography($event, homographyCanvas!); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
-        @touchend="onMouseUpHomography()"
-        ></canvas>
+        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded"
+          @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)"
+          @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
+          @mouseup="onMouseUpHomography()"
+          @touchstart="onTouchStartHomography($event, homographyCanvas!, homographyPoints)"
+          @touchmove="onTouchMoveHomography($event, homographyCanvas!); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
+          @touchend="onMouseUpHomography()"></canvas>
       </div>
 
       <!-- Projection Preview -->
