@@ -239,13 +239,17 @@ export function drawHomographyCanvas() {
   // --- Draw draggable corner handles ---
   const handles = getHandlesHomography(scaledPoints);
 
+  console.log("draggingIndex:", draggingIndex.value);
   handles.forEach((h, index) => {
+    console.log("Drawing handle", h);
     ctx.fillStyle =
       draggingIndex.value !== null &&
       draggingIndex.value !== -1 &&
       draggingIndex.value === index
         ? "orange"
         : "red";
+
+    console.log("Handle color:", ctx.fillStyle);
 
     ctx.fillRect(h.x - 5, h.y - 5, 10, 10);
   });

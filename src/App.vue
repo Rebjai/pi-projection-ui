@@ -18,7 +18,12 @@ import {
 } from "@/composables/useClients";
 import { populateRects, rects } from "@/composables/useRects";
 import { previewCanvas, selectedImage, setSelectedImage, drawCanvas, homographyCanvas, drawHomographyCanvas, homographyPoints, selectedDisplayImage } from "@/composables/useCanvas";
-import { onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging, draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove, onTouchStartHomography, onTouchMoveHomography } from "@/composables/useMouseHandlers";
+import {
+  onMouseDown, onMouseMove, onMouseUp, onMouseDownHomography, onMouseMoveHomography, dragging,
+  draggingIndex, onMouseUpHomography, onTouchStart, onTouchMove, onTouchStartHomography, onTouchMoveHomography, homographyPointMoving, onKeyDownHomography, hiddenInput,
+  isTouchDevice,
+  movePoint
+} from "@/composables/useMouseHandlers";
 import type { Assignment, Client, ClientConfig, DisplayConfig } from "@/types/projection";
 
 
@@ -123,7 +128,7 @@ watch(loading, async (newVal) => {
           class="mb-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"> Unselect Client </button>
         <!-- button to slice images for clients -->
         <button @click="sliceImagesForClients()" class="mb-2 ml-2 px-3 py-1 text-white rounded"
-          :class="isSlicing ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600' "
+          :class="isSlicing ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-500 hover:bg-purple-600'"
           :disabled="isSlicing"> {{ isSlicing ? 'Slicing...' : 'Slice images' }} </button>
         <!-- push config to clients -->
         <button @click="pushAllConfigsToClients(clients)"
@@ -204,15 +209,42 @@ watch(loading, async (newVal) => {
         <!-- button to save homography points to selectedClient config -->
         <button @click="setHomographyForClientDisplay(selectedClient!, selectedDisplay!, homographyPoints)"
           class="mb-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"> Save Homography </button>
-        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded"
-          @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints)"
-          @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
-          @mouseup="onMouseUpHomography()"
-          @touchstart="onTouchStartHomography($event, homographyCanvas!, homographyPoints)"
+        <!-- Canvas -->
+        <canvas ref="homographyCanvas" width="400" height="300" class="border border-gray-300 rounded" tabindex="0"
+          @mousedown="onMouseDownHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
+          @mousemove="onMouseMoveHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0) && homographyPointMoving) drawHomographyCanvas()"
+          @mouseup="onMouseUpHomography(); if (draggingIndex === null) drawHomographyCanvas()"
+          @touchstart="onTouchStartHomography($event, homographyCanvas!, homographyPoints); drawHomographyCanvas()"
           @touchmove="onTouchMoveHomography($event, homographyCanvas!); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"
-          @touchend="onMouseUpHomography()"></canvas>
-      </div>
+          @touchend="onMouseUpHomography(); if (draggingIndex === null) drawHomographyCanvas()"
+          @keydown="onKeyDownHomography($event, homographyCanvas!, homographyPoints); if (draggingIndex !== -1 && (draggingIndex || draggingIndex == 0)) drawHomographyCanvas()"></canvas>
 
+        <!-- Mobile arrow overlay -->
+        <div v-if="isTouchDevice && draggingIndex !== null"
+          class="absolute bottom-4 flex flex-col items-center space-y-2">
+          <button class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center"
+            @click="movePoint('up');
+            drawHomographyCanvas()">
+            ↑
+          </button>
+          <div class="flex space-x-2">
+            <button class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center"
+              @click="movePoint('left'); drawHomographyCanvas()">
+              ←
+            </button>
+            <button class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center"
+              @click="movePoint('down'); drawHomographyCanvas()">
+              ↓
+            </button>
+            <button class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center"
+              @click="movePoint('right'); drawHomographyCanvas()">
+              →
+            </button>
+          </div>
+        </div>
+
+
+      </div>
       <!-- Projection Preview -->
       <div class="col-span-2 flex flex-col items-center">
         <h2 class="text-xl font-semibold mb-2">Projection Preview</h2>

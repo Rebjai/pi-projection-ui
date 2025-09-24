@@ -10,8 +10,12 @@ export const dragging = ref<{
     offsetX?: number;
     offsetY?: number;
 } | null>(null);
+export const homographyPointMoving = ref(false);
+export const hiddenInput = ref<HTMLInputElement | null>(null);
+export const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
 const edgeThreshold = 6;
+
 
 
 function getHandles(rect: Rect) {
@@ -173,11 +177,13 @@ export function onPointerDownHomography( clientX: number, clientY: number, canva
   draggingIndex.value = handles.findIndex(
     (h) => Math.abs(h.x - pos.x) < radius && Math.abs(h.y - pos.y) < radius
   );
+  homographyPointMoving.value = true;
   console.log("onPointerDownHomography", draggingIndex.value);
 }
 
 export function onPointerMoveHomography(clientX: number, clientY: number, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
   if (draggingIndex.value === null || draggingIndex.value === -1) return;
+  if (!homographyPointMoving.value) return
   console.log("onMouseMoveHomography", draggingIndex.value);
   const pos = { x: clientX, y: clientY };
   const nx = pos.x / canvas.width;
@@ -186,7 +192,11 @@ export function onPointerMoveHomography(clientX: number, clientY: number, canvas
   console.log("Updated point:", points[draggingIndex.value]);
 }
 export function onMouseUpHomography() {
+  homographyPointMoving.value = false;
+  console.log("onMouseUpHomography", draggingIndex.value);
+  if (draggingIndex.value === -1) {
   draggingIndex.value = null;
+  }
 }
 
 export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
@@ -196,7 +206,7 @@ export function onMouseDownHomography(evt: MouseEvent, canvas: HTMLCanvasElement
 }
 
 export function onMouseMoveHomography(evt: MouseEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
-  if (draggingIndex.value !== null && draggingIndex.value !== -1) {
+  if (draggingIndex.value !== null && draggingIndex.value !== -1 && homographyPointMoving.value) {
     console.log("onMouseMoveHomography");
     const mousePos = getMousePos(evt, canvas);
     onPointerMoveHomography(mousePos.x, mousePos.y, canvas, points);
@@ -236,7 +246,7 @@ export function onTouchMove(e: TouchEvent, canvas: HTMLCanvasElement) {
 
 export function onTouchEnd(e: TouchEvent) {
   if (dragging.value) {
-    dragging.value = null;
+    // dragging.value = null;
     e.preventDefault();
   }
 }
@@ -255,5 +265,94 @@ export function onTouchMoveHomography(e: TouchEvent, canvas: HTMLCanvasElement, 
     const mousePos = getMousePos(e, canvas);
     onPointerMoveHomography(mousePos.x, mousePos.y, canvas, points);
     e.preventDefault();
+  }
+}
+
+export function onKeyDownHomography(e: KeyboardEvent, canvas: HTMLCanvasElement, points: number[][] = homographyPoints.value || []) {
+  if (draggingIndex.value === null || draggingIndex.value === -1) return;
+  const step = e.shiftKey ? 0.01 : 0.001; // Larger step with Shift
+  console.log("onKeyDownHomography", e.key, "step:", step);
+
+  switch (e.key) {
+    // case "ArrowUp":
+    //   points[draggingIndex.value][1] = Math.max(0, points[draggingIndex.value][1] - step);
+    //   e.preventDefault();
+    //   break;
+    // case "ArrowDown":
+    //   points[draggingIndex.value][1] = Math.min(1, points[draggingIndex.value][1] + step);
+    //   e.preventDefault();
+    //   break;
+    // case "ArrowLeft":
+    //   points[draggingIndex.value][0] = Math.max(0, points[draggingIndex.value][0] - step);
+    //   e.preventDefault();
+    //   break;
+    // case "ArrowRight":
+    //   points[draggingIndex.value][0] = Math.min(1, points[draggingIndex.value][0] + step);
+    //   e.preventDefault();
+    //   break;
+    //   // use wasd keys as alternative to arrow keys
+    // case "w":
+    //   points[draggingIndex.value][1] = Math.max(0, points[draggingIndex.value][1] - step);
+    //   e.preventDefault();
+    //   break;
+    // case "s":
+    //   points[draggingIndex.value][1] = Math.min(1, points[draggingIndex.value][1] + step);
+    //   e.preventDefault();
+    //   break;
+    // case "a":
+    //   points[draggingIndex.value][0] = Math.max(0, points[draggingIndex.value][0] - step);
+    //   e.preventDefault();
+    //   break;
+    // case "d":
+    //   points[draggingIndex.value][0] = Math.min(1, points[draggingIndex.value][0] + step);
+    //   e.preventDefault();
+    //   break;
+
+    // version using movePoint function
+    case "ArrowUp":
+    case "w":
+      movePoint("up", step, points, draggingIndex.value);
+      e.preventDefault();
+      break;
+    case "ArrowDown":
+    case "s":
+      movePoint("down", step, points, draggingIndex.value);
+      e.preventDefault();
+      break;
+    case "ArrowLeft":
+    case "a":
+      movePoint("left", step, points, draggingIndex.value);
+      e.preventDefault();
+      break;
+    case "ArrowRight":
+    case "d":
+      movePoint("right", step, points, draggingIndex.value);
+      e.preventDefault();
+      break;
+    case "Escape":
+      draggingIndex.value = null;
+      homographyPointMoving.value = false;
+      e.preventDefault();
+      break;
+  }
+}
+
+
+export function movePoint(direction: "up" | "down" | "left" | "right", step: number = 0.001, points: number[][] = homographyPoints.value || [], index: number | null = draggingIndex.value) {
+  if (index === null || index === -1) return;
+  console.log("movePoint", direction, "step:", step, "index:", index);
+  switch (direction) {
+    case "up":
+      points[index][1] = Math.max(0, points[index][1] - step);
+      break;
+    case "down":
+      points[index][1] = Math.min(1, points[index][1] + step);
+      break;
+    case "left":
+      points[index][0] = Math.max(0, points[index][0] - step);
+      break;
+    case "right":
+      points[index][0] = Math.min(1, points[index][0] + step);
+      break;
   }
 }
